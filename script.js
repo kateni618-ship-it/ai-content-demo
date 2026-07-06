@@ -147,6 +147,46 @@ const musePieces = [
   { id: "bottom-1", category: "Bottom", title: "Low Rise Resort Maxi Skirt", price: "$39.9", image: "./assets/product-8.jpg" }
 ];
 
+const contentTabs = ["All", "Posts", "Videos", "Requests"];
+
+const postBatches = [
+  {
+    id: "post-batch-1",
+    date: "2026-07-03 15:19:36",
+    productImage: "./assets/product-1.jpg",
+    productTitle: "Fringe Detail Halter Maxi Dress",
+    price: "$43.90",
+    previews: ["./assets/product-2.jpg", "./assets/product-3.jpeg", "./assets/product-4.jpg", "./assets/product-2.jpg"]
+  },
+  {
+    id: "post-batch-2",
+    date: "2026-06-23 12:45:57",
+    productImage: "./assets/product-5.jpg",
+    productTitle: "Strapless Sculpt Mini Dress",
+    price: "$36.80",
+    previews: ["./assets/product-5.jpg", "./assets/product-5.jpg", "./assets/product-6.jpg", "./assets/product-5.jpg"]
+  },
+  {
+    id: "post-batch-3",
+    date: "2026-06-22 20:12:20",
+    productImage: "./assets/product-3.jpeg",
+    productTitle: "Soft Summer Styling Set",
+    price: "$49.50",
+    previews: ["./assets/product-7.jpg", "./assets/product-8.jpg", "./assets/product-6.jpg"]
+  }
+];
+
+const videoBatches = [
+  {
+    id: "video-batch-1",
+    date: "2026-07-01 10:22:11",
+    productImage: "./assets/product-2.jpg",
+    productTitle: "Fringe Detail Halter Maxi Dress",
+    price: "$43.90",
+    previews: ["./assets/product-4.jpg", "./assets/product-6.jpg"]
+  }
+];
+
 const defaultSettings = {
   tone: "Friendly",
   platform: "TikTok",
@@ -165,6 +205,7 @@ let museBriefState = {
   reference: "",
   photos: {}
 };
+let museRequests = [];
 
 function syncViewButtons() {
   const currentView = document.body.dataset.view || "mobile";
@@ -220,6 +261,9 @@ function route() {
   } else if (page === "muse-next") {
     document.body.dataset.page = "muse-next";
     renderMuseNext(id);
+  } else if (page === "my-content") {
+    document.body.dataset.page = "my-content";
+    renderMyContent(id || "All");
   } else if (page === "mine") {
     document.body.dataset.page = "mine";
     renderMine();
@@ -235,7 +279,7 @@ function route() {
 }
 
 function setActiveTab(page) {
-  const tab = ["product", "creator-breakdown", "structure-setup", "content-kit", "muse-brief", "muse-next", "create"].includes(page) ? "select" : page;
+  const tab = ["product", "creator-breakdown", "structure-setup", "content-kit", "muse-brief", "muse-next", "my-content", "create"].includes(page) ? "select" : page;
   tabButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tab === tab);
   });
@@ -1093,8 +1137,26 @@ function bindMuseBriefInteractions(productId, step) {
       window.location.hash = `#/muse-brief/${productId}/${step + 1}`;
       return;
     }
+    upsertMuseRequest(productId);
     window.location.hash = `#/muse-next/${productId}`;
   });
+}
+
+function upsertMuseRequest(productId) {
+  const product = products.find((item) => item.id === productId) || products[0];
+  const request = {
+    id: `muse-${product.id}`,
+    status: "in_production",
+    updatedAt: Date.now(),
+    productImage: product.image,
+    productTitle: product.title,
+    price: product.price,
+    concept: museBriefState.concept || "Outfit Showcase",
+    notes: museBriefState.notes,
+    previewImage: Object.values(museBriefState.photos)[0] || product.image
+  };
+  museRequests = [request, ...museRequests.filter((item) => item.id !== request.id)];
+  return request;
 }
 
 function renderMuseNext(id) {
@@ -1144,7 +1206,7 @@ function renderMuseNext(id) {
     window.location.hash = `#/muse-brief/${product.id}/1`;
   });
   app.querySelector("[data-go-mine]")?.addEventListener("click", () => {
-    window.location.hash = "#/mine";
+    window.location.hash = "#/my-content/Requests";
   });
 }
 
@@ -1425,7 +1487,8 @@ function renderMine() {
 
         <section class="mine-menu-group">
           <h2>Promote</h2>
-          <button type="button">My Picks</button>
+          <button type="button">My Picks <span>82</span></button>
+          <button type="button" data-open-my-content>My Content <span>${15 + museRequests.length}</span></button>
         </section>
 
         <section class="mine-menu-group">
@@ -1441,6 +1504,189 @@ function renderMine() {
       </div>
     </section>
   `;
+
+  app.querySelector("[data-open-my-content]")?.addEventListener("click", () => {
+    window.location.hash = "#/my-content/All";
+  });
+}
+
+function normalizeContentTab(tab) {
+  const match = contentTabs.find((item) => item.toLowerCase() === String(tab || "").toLowerCase());
+  return match || "All";
+}
+
+function renderMyContent(tabName = "All") {
+  const activeTab = normalizeContentTab(tabName);
+  const postsToShow = activeTab === "All" || activeTab === "Posts" ? postBatches : [];
+  const videosToShow = activeTab === "All" || activeTab === "Videos" ? videoBatches : [];
+  const requestsToShow = activeTab === "All" || activeTab === "Requests" ? museRequests : [];
+  const hasContent = postsToShow.length || videosToShow.length || requestsToShow.length;
+
+  app.innerHTML = `
+    <section class="my-content-page" aria-label="My Content">
+      <header class="my-content-header">
+        <button type="button" aria-label="Back to Mine" data-back-mine>
+          <span aria-hidden="true">‹</span>
+          <b>Back to Mine</b>
+        </button>
+        <div>
+          <h1>My Content</h1>
+          <p>All your shoppable content in one place.</p>
+        </div>
+      </header>
+
+      <nav class="my-content-tabs" aria-label="Content type">
+        ${contentTabs.map((tab) => `
+          <button class="${tab === activeTab ? "is-active" : ""}" type="button" data-content-tab="${tab}">${tab}</button>
+        `).join("")}
+      </nav>
+
+      <section class="my-content-list" aria-label="Content list">
+        ${postsToShow.map(renderPostBatch).join("")}
+        ${videosToShow.map(renderVideoBatch).join("")}
+        ${requestsToShow.map(renderRequestBatch).join("")}
+        ${activeTab === "Requests" ? renderNewRequestCard() : ""}
+        ${!hasContent && activeTab !== "Requests" ? `<p class="my-content-empty">No content yet.</p>` : ""}
+      </section>
+    </section>
+  `;
+
+  app.querySelector("[data-back-mine]")?.addEventListener("click", () => {
+    window.location.hash = "#/mine";
+  });
+
+  app.querySelectorAll("[data-content-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      window.location.hash = `#/my-content/${button.dataset.contentTab}`;
+    });
+  });
+
+  app.querySelectorAll("[data-publish-content]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.textContent = "Published";
+      button.classList.add("is-done");
+    });
+  });
+
+  app.querySelector("[data-new-muse-request]")?.addEventListener("click", () => {
+    window.location.hash = "#/muse-brief/fringe-dress/1";
+  });
+
+  app.querySelectorAll("[data-open-request]").forEach((button) => {
+    button.addEventListener("click", () => {
+      window.location.hash = "#/muse-next/fringe-dress";
+    });
+  });
+}
+
+function renderPostBatch(batch) {
+  return `
+    <section class="my-content-batch">
+      <div class="my-content-labels">
+        <h2>Promote Product(s)</h2>
+        <h2>Posts <span>${batch.date}</span></h2>
+      </div>
+      <div class="my-content-row">
+        ${renderContentProduct(batch)}
+        <div class="my-content-gallery">
+          ${batch.previews.map((image) => `<img src="${image}" alt="">`).join("")}
+        </div>
+        ${renderPublishButton()}
+      </div>
+    </section>
+  `;
+}
+
+function renderVideoBatch(batch) {
+  return `
+    <section class="my-content-batch">
+      <div class="my-content-labels">
+        <h2>Promote Product(s)</h2>
+        <h2>Videos <span>${batch.date}</span></h2>
+      </div>
+      <div class="my-content-row">
+        ${renderContentProduct(batch)}
+        <div class="my-content-gallery">
+          ${batch.previews.map((image) => `
+            <div class="my-content-video-thumb">
+              <img src="${image}" alt="">
+              <span aria-hidden="true">▶</span>
+            </div>
+          `).join("")}
+        </div>
+        ${renderPublishButton()}
+      </div>
+    </section>
+  `;
+}
+
+function renderRequestBatch(request) {
+  return `
+    <section class="my-content-batch my-content-request-batch">
+      <div class="my-content-labels">
+        <h2>Promote Product(s)</h2>
+        <h2>Requests <span>${formatContentDate(request.updatedAt)}</span></h2>
+      </div>
+      <div class="my-content-row">
+        ${renderContentProduct({
+          productImage: request.productImage,
+          productTitle: request.productTitle,
+          price: request.price
+        })}
+        <div class="my-content-gallery my-content-request-gallery">
+          <div class="my-content-loading-preview">
+            <span>In Production</span>
+            <i aria-hidden="true"></i>
+            <strong>Generating</strong>
+            <p>We are assigning a specialist to produce your request. This usually takes 1-3 business days.</p>
+          </div>
+        </div>
+        <div class="my-content-request-action">
+          <span>In Production</span>
+          <button type="button" data-open-request="${request.id}">View Brief</button>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+function renderNewRequestCard() {
+  return `
+    <button type="button" class="my-content-new-request" data-new-muse-request>
+      <span aria-hidden="true">+</span>
+      <strong>New Muse for Me</strong>
+      <p>Submit another custom content request.</p>
+    </button>
+  `;
+}
+
+function renderContentProduct(batch) {
+  return `
+    <article class="my-content-product">
+      ${batch.productImage ? `<img src="${batch.productImage}" alt="">` : `<div class="my-content-product-placeholder"></div>`}
+      ${batch.productTitle ? `
+        <div>
+          <strong>${batch.productTitle}</strong>
+          <span>${batch.price}</span>
+        </div>
+      ` : ""}
+    </article>
+  `;
+}
+
+function renderPublishButton() {
+  return `
+    <div class="my-content-publish">
+      <span>Extra 5% with AI Look</span>
+      <button type="button" data-publish-content>Publish</button>
+    </div>
+  `;
+}
+
+function formatContentDate(value) {
+  const date = value ? new Date(value) : new Date();
+  const pad = (num) => String(num).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
 }
 
 function renderPlaceholder(page) {
