@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MuseSelect Product App</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body data-view="mobile">
+  <div class="preview-toolbar" aria-label="Preview mode">
+    <strong>MuseSelect Demo</strong>
+    <div class="view-switch" role="group" aria-label="Choose preview device">
+      <button class="view-btn" type="button" data-view-target="web">Web</button>
+      <button class="view-btn is-active" type="button" data-view-target="mobile">Mobile</button>
+    </div>
+  </div>
+
+  <main class="app-shell">
+    <section id="app" class="app-view" aria-live="polite"></section>
+
+    <nav class="tabbar" aria-label="Primary navigation">
+      <button type="button" data-route="#/select" data-tab="select">
+        <span>Select</span>
+      </button>
+      <button type="button" data-disabled-tab="museland" data-tab="museland">
+        <span>Museland</span>
+      </button>
+      <button class="global-create-trigger" type="button" data-global-create-toggle data-tab="create" aria-expanded="false">
+        <span>+Create</span>
+      </button>
+      <button type="button" data-disabled-tab="pick" data-tab="pick">
+        <span>Pick</span>
+      </button>
+      <button type="button" data-route="#/mine" data-tab="mine">
+        <span>Mine</span>
+      </button>
+    </nav>
+
+    <div class="global-create-menu" data-global-create-menu hidden>
+      <button class="global-create-backdrop" type="button" aria-label="Close create menu" data-close-global-create></button>
+      <section class="global-create-panel" aria-label="Create menu">
+        <button type="button" data-global-create-action="Shoppable Video">
+          <strong>Shoppable Video</strong>
+          <span>Turn this product into a shoppable short video.</span>
+        </button>
+        <button type="button" data-global-create-action="Tryon Post">
+          <strong>Tryon Post</strong>
+          <span>Create a try-on style post for your audience.</span>
+        </button>
+        <button type="button" data-global-create-action="Shoppable Script">
+          <strong>Shoppable Script</strong>
+          <span>Generate hooks, captions, and CTA scripts.</span>
+        </button>
+        <button type="button" data-global-create-action="Cut Assets">
+          <strong>Cut Assets</strong>
+          <span>Download ready-to-edit clips and product b-roll.</span>
+        </button>
+      </section>
+    </div>
+  </main>
+
+  <script src="./script.js"></script>
+</body>
+</html>
