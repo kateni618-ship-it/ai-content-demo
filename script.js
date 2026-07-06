@@ -126,6 +126,27 @@ const creatorExamples = [
   }
 ];
 
+const museConcepts = [
+  { id: "showcase", title: "Outfit Showcase", note: "Show fit, movement, and styling details.", image: "./assets/product-2.jpg" },
+  { id: "transition", title: "Transition Edit", note: "Quick changes, beat cuts, and before-after energy.", image: "./assets/product-3.jpeg" },
+  { id: "daily", title: "Daily Outfit", note: "Natural try-on footage with casual creator pacing.", image: "./assets/product-4.jpg" },
+  { id: "scene", title: "Scene Styling", note: "A themed setting with clear mood and shopping context.", image: "./assets/product-5.jpg" }
+];
+
+const musePhotoSlots = [
+  { id: "full", title: "Full Body", note: "Full frame, good light" },
+  { id: "half", title: "Half Body", note: "Waist up, clear face" },
+  { id: "side", title: "Side Face", note: "Clear side profile" }
+];
+
+const musePieces = [
+  { id: "shoe-1", category: "Shoes", title: "Summer Strap Sandals", price: "$21", image: "./assets/product-6.jpg" },
+  { id: "shoe-2", category: "Shoes", title: "Minimal Leather Loafers", price: "$45", image: "./assets/product-7.jpg" },
+  { id: "bag-1", category: "Bag", title: "Resort Shoulder Bag", price: "$28", image: "./assets/product-8.jpg" },
+  { id: "top-1", category: "Top", title: "Relaxed Linen Shirt", price: "$31.2", image: "./assets/product-7.jpg" },
+  { id: "bottom-1", category: "Bottom", title: "Low Rise Resort Maxi Skirt", price: "$39.9", image: "./assets/product-8.jpg" }
+];
+
 const defaultSettings = {
   tone: "Friendly",
   platform: "TikTok",
@@ -137,6 +158,13 @@ const defaultSettings = {
 };
 
 let contentSettings = { ...defaultSettings };
+let museBriefState = {
+  styledPieces: [],
+  concept: "",
+  notes: "",
+  reference: "",
+  photos: {}
+};
 
 function syncViewButtons() {
   const currentView = document.body.dataset.view || "mobile";
@@ -167,7 +195,7 @@ bindGlobalCreateMenu();
 
 function route() {
   const hash = window.location.hash || "#/select";
-  const [, page, id] = hash.split("/");
+  const [, page, id, step] = hash.split("/");
 
   if (!window.location.hash) {
     window.location.hash = "#/select";
@@ -186,6 +214,12 @@ function route() {
   } else if (page === "content-kit") {
     document.body.dataset.page = "content-kit";
     renderContentKit(id);
+  } else if (page === "muse-brief") {
+    document.body.dataset.page = "muse-brief";
+    renderMuseBrief(id, Number(step) || 1);
+  } else if (page === "muse-next") {
+    document.body.dataset.page = "muse-next";
+    renderMuseNext(id);
   } else if (page === "mine") {
     document.body.dataset.page = "mine";
     renderMine();
@@ -201,7 +235,7 @@ function route() {
 }
 
 function setActiveTab(page) {
-  const tab = ["product", "creator-breakdown", "structure-setup", "content-kit", "create"].includes(page) ? "select" : page;
+  const tab = ["product", "creator-breakdown", "structure-setup", "content-kit", "muse-brief", "muse-next", "create"].includes(page) ? "select" : page;
   tabButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tab === tab);
   });
@@ -689,6 +723,11 @@ function bindCreateFab() {
   app.querySelectorAll("[data-create-action]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (button.dataset.createAction === "Shoppable Video") {
+        const [, page, id] = (window.location.hash || "").split("/");
+        window.location.hash = `#/muse-brief/${page === "product" && id ? id : "fringe-dress"}/1`;
+        return;
+      }
       button.classList.add("is-selected");
       window.setTimeout(() => button.classList.remove("is-selected"), 700);
     });
@@ -777,9 +816,335 @@ function bindGlobalCreateMenu() {
   document.querySelectorAll("[data-global-create-action]").forEach((button) => {
     button.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (button.dataset.globalCreateAction === "Shoppable Video") {
+        closeMenu();
+        const [, page, id] = (window.location.hash || "").split("/");
+        window.location.hash = `#/muse-brief/${page === "product" && id ? id : "fringe-dress"}/1`;
+        return;
+      }
       button.classList.add("is-selected");
       window.setTimeout(() => button.classList.remove("is-selected"), 700);
     });
+  });
+}
+
+function renderMuseBrief(id, requestedStep = 1) {
+  const product = products.find((item) => item.id === id) || products[0];
+  const step = Math.min(Math.max(requestedStep, 1), 3);
+  const selectedPieceIds = new Set(museBriefState.styledPieces);
+  const selectedPieces = musePieces.filter((piece) => selectedPieceIds.has(piece.id));
+  const photoCount = Object.keys(museBriefState.photos).length;
+  const canContinue = step === 2 ? Boolean(museBriefState.concept) : true;
+  const canSubmit = photoCount === musePhotoSlots.length;
+
+  app.innerHTML = `
+    <section class="muse-brief-page">
+      <header class="workflow-header muse-brief-header">
+        <button type="button" aria-label="Back" data-muse-back>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18L9 12L15 6"/></svg>
+        </button>
+        <div>
+          <span>MUSE FOR ME</span>
+          <h1>Brief Your Muse</h1>
+          <p>Tell us the vision. We'll make the video for you.</p>
+        </div>
+      </header>
+
+      <nav class="muse-brief-steps" aria-label="Brief progress">
+        ${[
+          ["1", "Product & Look"],
+          ["2", "Video Direction"],
+          ["3", "Your Photos"]
+        ].map(([index, label]) => `
+          <button type="button" class="${Number(index) === step ? "is-active" : Number(index) < step ? "is-done" : ""}" data-muse-step="${index}">
+            <i>${index}</i>
+            <span>${label}</span>
+          </button>
+        `).join("")}
+      </nav>
+
+      ${step === 1 ? renderMuseLookStep(product, selectedPieceIds, selectedPieces) : ""}
+      ${step === 2 ? renderMuseDirectionStep(product, selectedPieces) : ""}
+      ${step === 3 ? renderMusePhotoStep(product) : ""}
+
+      <footer class="workflow-actions muse-brief-actions ${step === 1 ? "two-up" : ""}">
+        ${step === 1 ? `<button class="secondary-filter" type="button" data-muse-save>Save Draft</button>` : ""}
+        <button class="primary-filter" type="button" data-muse-next ${step === 2 && !canContinue ? "disabled" : ""} ${step === 3 && !canSubmit ? "disabled" : ""}>
+          ${step < 3 ? "Next" : "Brief Your Muse"}
+        </button>
+      </footer>
+    </section>
+  `;
+
+  bindMuseBriefInteractions(product.id, step);
+}
+
+function renderMuseLookStep(product, selectedPieceIds, selectedPieces) {
+  return `
+    <section class="muse-showcase-strip" aria-label="Examples">
+      ${creatorExamples.map((item) => `
+        <article>
+          <img src="${item.image}" alt="">
+          <span>▶</span>
+          <strong>${item.angle}</strong>
+          <small>${item.creator}</small>
+        </article>
+      `).join("")}
+    </section>
+
+    <section class="setup-card muse-product-card">
+      <div class="muse-section-head">
+        <h2>Your Product</h2>
+        <p>Style it into a look, or leave as-is.</p>
+      </div>
+      <div class="muse-selected-product">
+        <img src="${product.image}" alt="${product.title}">
+        <div>
+          <strong>${product.title}</strong>
+          <span>${product.price} · ${maxEarnLabel(product)}</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="setup-card muse-look-builder">
+      <div class="muse-section-head">
+        <h2>Complete the Look</h2>
+        <p>Optional pieces help the team create a stronger shoppable video.</p>
+      </div>
+      <div class="muse-look-slots">
+        <article class="muse-look-slot is-featured">
+          <img src="${product.image}" alt="">
+          <span>Featured</span>
+        </article>
+        ${selectedPieces.map((piece) => `
+          <button class="muse-look-slot is-filled" type="button" data-toggle-piece="${piece.id}">
+            <img src="${piece.image}" alt="">
+            <span>${piece.category}</span>
+          </button>
+        `).join("")}
+        ${selectedPieces.length < 3 ? `<button class="muse-look-slot" type="button" data-open-pieces><b>+</b><span>Add Piece</span></button>` : ""}
+      </div>
+      <div class="muse-piece-grid" ${selectedPieces.length ? "hidden" : ""}>
+        ${musePieces.map((piece) => `
+          <button class="${selectedPieceIds.has(piece.id) ? "is-selected" : ""}" type="button" data-toggle-piece="${piece.id}">
+            <img src="${piece.image}" alt="">
+            <span>${piece.category}</span>
+            <strong>${piece.title}</strong>
+            <small>${piece.price}</small>
+          </button>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function renderMuseDirectionStep(product, selectedPieces) {
+  return `
+    <section class="setup-card muse-look-summary">
+      <h2>Your Look</h2>
+      <div class="muse-summary-track">
+        <article>
+          <img src="${product.image}" alt="">
+          <span>Featured</span>
+        </article>
+        ${selectedPieces.map((piece) => `
+          <article>
+            <img src="${piece.image}" alt="">
+            <span>${piece.category}</span>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+
+    <section class="setup-card muse-direction-card">
+      <div class="muse-section-head">
+        <h2>Video Direction</h2>
+        <p>Choose the style the content team should follow.</p>
+      </div>
+      <div class="muse-concept-grid">
+        ${museConcepts.map((concept) => `
+          <button class="${museBriefState.concept === concept.title ? "is-active" : ""}" type="button" data-muse-concept="${concept.title}">
+            <img src="${concept.image}" alt="">
+            <strong>${concept.title}</strong>
+            <span>${concept.note}</span>
+          </button>
+        `).join("")}
+      </div>
+      <label class="muse-text-field">
+        <span>Notes for the team</span>
+        <textarea data-muse-notes rows="4" placeholder="e.g. 2 looks, summer resort vibe, upbeat music, hook in first 2s">${museBriefState.notes}</textarea>
+      </label>
+      <label class="muse-text-field">
+        <span>Reference video link</span>
+        <input data-muse-reference value="${museBriefState.reference}" placeholder="Paste TikTok / Instagram / YouTube link">
+      </label>
+    </section>
+  `;
+}
+
+function renderMusePhotoStep() {
+  return `
+    <section class="setup-card muse-photo-card">
+      <div class="muse-section-head">
+        <h2>Your Body & Face</h2>
+        <p>Upload three private references for a more accurate result.</p>
+      </div>
+      <div class="muse-photo-list">
+        ${musePhotoSlots.map((slot, index) => {
+          const photo = museBriefState.photos[slot.id];
+          return `
+            <article class="${photo ? "is-uploaded" : ""}">
+              <div>
+                <strong>${slot.title}</strong>
+                <span>${slot.note}</span>
+              </div>
+              ${photo ? `
+                <img src="${photo}" alt="">
+                <button type="button" data-upload-photo="${slot.id}">Replace</button>
+              ` : `
+                <button class="muse-upload-tile" type="button" data-upload-photo="${slot.id}">
+                  <b>+</b>
+                  <span>Upload</span>
+                </button>
+              `}
+            </article>
+          `;
+        }).join("")}
+      </div>
+    </section>
+
+    <section class="setup-card muse-example-card">
+      <h2>Examples</h2>
+      <div class="muse-example-track">
+        ${musePhotoSlots.map((slot, index) => `
+          <article>
+            <img src="${products[index + 1]?.image || products[0].image}" alt="">
+            <span>${slot.title}</span>
+          </article>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function bindMuseBriefInteractions(productId, step) {
+  app.querySelector("[data-muse-back]")?.addEventListener("click", () => {
+    if (step > 1) {
+      window.location.hash = `#/muse-brief/${productId}/${step - 1}`;
+      return;
+    }
+    window.location.hash = `#/product/${productId}`;
+  });
+
+  app.querySelectorAll("[data-muse-step]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const targetStep = Number(button.dataset.museStep);
+      if (targetStep > step + 1) return;
+      window.location.hash = `#/muse-brief/${productId}/${targetStep}`;
+    });
+  });
+
+  app.querySelector("[data-open-pieces]")?.addEventListener("click", () => {
+    app.querySelector(".muse-piece-grid")?.removeAttribute("hidden");
+  });
+
+  app.querySelectorAll("[data-toggle-piece]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const pieceId = button.dataset.togglePiece;
+      const exists = museBriefState.styledPieces.includes(pieceId);
+      museBriefState.styledPieces = exists
+        ? museBriefState.styledPieces.filter((item) => item !== pieceId)
+        : [...museBriefState.styledPieces, pieceId].slice(0, 3);
+      renderMuseBrief(productId, step);
+    });
+  });
+
+  app.querySelectorAll("[data-muse-concept]").forEach((button) => {
+    button.addEventListener("click", () => {
+      museBriefState.concept = button.dataset.museConcept;
+      renderMuseBrief(productId, step);
+    });
+  });
+
+  app.querySelector("[data-muse-notes]")?.addEventListener("input", (event) => {
+    museBriefState.notes = event.target.value;
+  });
+
+  app.querySelector("[data-muse-reference]")?.addEventListener("input", (event) => {
+    museBriefState.reference = event.target.value;
+  });
+
+  app.querySelectorAll("[data-upload-photo]").forEach((button, index) => {
+    button.addEventListener("click", () => {
+      const slotId = button.dataset.uploadPhoto;
+      museBriefState.photos[slotId] = products[(index + 1) % products.length].image;
+      renderMuseBrief(productId, step);
+    });
+  });
+
+  app.querySelector("[data-muse-save]")?.addEventListener("click", (event) => {
+    event.currentTarget.textContent = "Draft Saved";
+  });
+
+  app.querySelector("[data-muse-next]")?.addEventListener("click", () => {
+    if (step === 2 && !museBriefState.concept) return;
+    if (step === 3 && Object.keys(museBriefState.photos).length < musePhotoSlots.length) return;
+    if (step < 3) {
+      window.location.hash = `#/muse-brief/${productId}/${step + 1}`;
+      return;
+    }
+    window.location.hash = `#/muse-next/${productId}`;
+  });
+}
+
+function renderMuseNext(id) {
+  const product = products.find((item) => item.id === id) || products[0];
+  const selectedPieces = musePieces.filter((piece) => museBriefState.styledPieces.includes(piece.id));
+
+  app.innerHTML = `
+    <section class="workflow-page muse-next-page">
+      <header class="workflow-header">
+        <button type="button" aria-label="Back" data-back-brief>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18L9 12L15 6"/></svg>
+        </button>
+        <div>
+          <span>Submitted</span>
+          <h1>Your Muse brief is queued</h1>
+        </div>
+      </header>
+
+      <section class="setup-card muse-next-summary">
+        <img src="${product.image}" alt="${product.title}">
+        <div>
+          <strong>${product.title}</strong>
+          <span>${museBriefState.concept || "Video direction"} · ${selectedPieces.length + 1} item look</span>
+          <p>The content team has enough context to create a shoppable video draft.</p>
+        </div>
+      </section>
+
+      <section class="setup-card muse-next-status">
+        <h2>Next</h2>
+        <article><b>1</b><span>Brief review</span><small>Queued now</small></article>
+        <article><b>2</b><span>Video production</span><small>Team prepares the draft</small></article>
+        <article><b>3</b><span>Ready to post</span><small>Find it in Mine</small></article>
+      </section>
+
+      <div class="workflow-actions two-up">
+        <button class="secondary-filter" type="button" data-new-brief>New Brief</button>
+        <button class="primary-filter" type="button" data-go-mine>View in Mine</button>
+      </div>
+    </section>
+  `;
+
+  app.querySelector("[data-back-brief]")?.addEventListener("click", () => {
+    window.location.hash = `#/muse-brief/${product.id}/3`;
+  });
+  app.querySelector("[data-new-brief]")?.addEventListener("click", () => {
+    museBriefState = { styledPieces: [], concept: "", notes: "", reference: "", photos: {} };
+    window.location.hash = `#/muse-brief/${product.id}/1`;
+  });
+  app.querySelector("[data-go-mine]")?.addEventListener("click", () => {
+    window.location.hash = "#/mine";
   });
 }
 
