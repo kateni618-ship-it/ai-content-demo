@@ -203,7 +203,8 @@ let museBriefState = {
   concept: "",
   notes: "",
   reference: "",
-  photos: {}
+  photos: {},
+  photoEnabled: false
 };
 let museRequests = [];
 
@@ -879,7 +880,7 @@ function renderMuseBrief(id, requestedStep = 1) {
   const selectedPieces = musePieces.filter((piece) => selectedPieceIds.has(piece.id));
   const photoCount = Object.keys(museBriefState.photos).length;
   const canContinue = step === 2 ? Boolean(museBriefState.concept) : true;
-  const canSubmit = photoCount === musePhotoSlots.length;
+  const canSubmit = !museBriefState.photoEnabled || photoCount === musePhotoSlots.length;
 
   app.innerHTML = `
     <section class="muse-brief-page">
@@ -925,17 +926,6 @@ function renderMuseBrief(id, requestedStep = 1) {
 
 function renderMuseLookStep(product, selectedPieceIds, selectedPieces) {
   return `
-    <section class="muse-showcase-strip" aria-label="Examples">
-      ${creatorExamples.map((item) => `
-        <article>
-          <img src="${item.image}" alt="">
-          <span>▶</span>
-          <strong>${item.angle}</strong>
-          <small>${item.creator}</small>
-        </article>
-      `).join("")}
-    </section>
-
     <section class="setup-card muse-product-card">
       <div class="muse-section-head">
         <h2>Your Product</h2>
@@ -1030,9 +1020,15 @@ function renderMusePhotoStep() {
   return `
     <section class="setup-card muse-photo-card">
       <div class="muse-section-head">
-        <h2>Your Body & Face</h2>
-        <p>Upload three private references for a more accurate result.</p>
+        <div>
+          <h2>Your Body & Face</h2>
+          <p>Upload three private references for a more accurate result.</p>
+        </div>
+        <button type="button" class="muse-photo-toggle ${museBriefState.photoEnabled ? "is-on" : ""}" data-toggle-photos aria-pressed="${museBriefState.photoEnabled}">
+          <span></span>
+        </button>
       </div>
+      ${museBriefState.photoEnabled ? `
       <div class="muse-photo-list">
         ${musePhotoSlots.map((slot, index) => {
           const photo = museBriefState.photos[slot.id];
@@ -1055,8 +1051,10 @@ function renderMusePhotoStep() {
           `;
         }).join("")}
       </div>
+      ` : ""}
     </section>
 
+    ${museBriefState.photoEnabled ? `
     <section class="setup-card muse-example-card">
       <h2>Examples</h2>
       <div class="muse-example-track">
@@ -1068,6 +1066,7 @@ function renderMusePhotoStep() {
         `).join("")}
       </div>
     </section>
+    ` : ""}
   `;
 }
 
@@ -1126,13 +1125,18 @@ function bindMuseBriefInteractions(productId, step) {
     });
   });
 
+  app.querySelector("[data-toggle-photos]")?.addEventListener("click", () => {
+    museBriefState.photoEnabled = !museBriefState.photoEnabled;
+    renderMuseBrief(productId, step);
+  });
+
   app.querySelector("[data-muse-save]")?.addEventListener("click", (event) => {
     event.currentTarget.textContent = "Draft Saved";
   });
 
   app.querySelector("[data-muse-next]")?.addEventListener("click", () => {
     if (step === 2 && !museBriefState.concept) return;
-    if (step === 3 && Object.keys(museBriefState.photos).length < musePhotoSlots.length) return;
+    if (step === 3 && museBriefState.photoEnabled && Object.keys(museBriefState.photos).length < musePhotoSlots.length) return;
     if (step < 3) {
       window.location.hash = `#/muse-brief/${productId}/${step + 1}`;
       return;
@@ -1202,7 +1206,7 @@ function renderMuseNext(id) {
     window.location.hash = `#/muse-brief/${product.id}/3`;
   });
   app.querySelector("[data-new-brief]")?.addEventListener("click", () => {
-    museBriefState = { styledPieces: [], concept: "", notes: "", reference: "", photos: {} };
+    museBriefState = { styledPieces: [], concept: "", notes: "", reference: "", photos: {}, photoEnabled: false };
     window.location.hash = `#/muse-brief/${product.id}/1`;
   });
   app.querySelector("[data-go-mine]")?.addEventListener("click", () => {
