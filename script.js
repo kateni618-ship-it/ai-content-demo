@@ -207,6 +207,33 @@ let museBriefState = {
   photoEnabled: false
 };
 let museRequests = [];
+let productAssetFilter = "";
+let productAssetPanelOpen = false;
+let productAssetExpandedInput = "";
+let productAssetSelectedTemplate = "tryon-clip";
+let productAssetSelectedAvatar = "mine";
+let productAssetSelectedProductImage = "";
+const productAssetAvatars = [
+  { id: "mine", label: "My Avatar", type: "user", image: "./assets/default-avatar.svg" },
+  { id: "official-1", label: "Official 1", type: "official", image: "./assets/product-4.jpg" },
+  { id: "official-2", label: "Official 2", type: "official", image: "./assets/product-5.jpg" },
+  { id: "official-3", label: "Official 3", type: "official", image: "./assets/product-6.jpg" }
+];
+const productAssetTemplates = [
+  { id: "tryon-clip", title: "Avatar try-on", output: "Video · 5s", image: "./assets/product-2.jpg" },
+  { id: "detail-motion", title: "Detail motion", output: "Video · 5s", image: "./assets/product-3.jpeg" },
+  { id: "studio-still", title: "Studio still", output: "Image", image: "./assets/product-7.jpg" },
+  { id: "hanger-still", title: "Hanger still", output: "Image", image: "./assets/product-8.jpg" }
+];
+const productAssetsByProduct = {
+  "fringe-dress": [
+    { id: "generated-1", title: "Avatar try-on clip", kind: "Video", source: "Generated", duration: "05s", image: "./assets/product-5.jpg", createdAt: 800 },
+    { id: "generated-2", title: "Studio product still", kind: "Image", source: "Generated", duration: "", image: "./assets/product-7.jpg", createdAt: 650 },
+    { id: "filmed-1", title: "Full body try-on", kind: "Image", source: "Filmed", duration: "", image: "./assets/product-2.jpg", createdAt: 500 },
+    { id: "filmed-2", title: "Fringe movement", kind: "Video", source: "Filmed", duration: "06s", image: "./assets/product-3.jpeg", createdAt: 400 },
+    { id: "filmed-3", title: "Texture detail", kind: "Image", source: "Filmed", duration: "", image: "./assets/product-4.jpg", createdAt: 250 }
+  ]
+};
 
 function syncViewButtons() {
   const currentView = document.body.dataset.view || "mobile";
@@ -533,54 +560,7 @@ function renderProduct(id) {
           </div>
         </section>
 
-        <section class="creator-insight why-sells" aria-label="Why it sells">
-          <div class="section-head">
-            <div>
-              <h2>Why it sells</h2>
-              <p>Creator-ready angles for women’s fashion audiences.</p>
-            </div>
-          </div>
-          <div class="sell-points">
-            <article>
-              <span>Key selling points</span>
-              <p>Fringe movement reads well on camera. Halter neckline feels vacation-ready.</p>
-            </article>
-            <article>
-              <span>Audience fit</span>
-              <p>Best for vacation shoppers, minimal chic followers, and date-night buyers.</p>
-            </article>
-            <article>
-              <span>Creator angle</span>
-              <p>Use “one dress, three occasions” or “looks styled without trying hard.”</p>
-            </article>
-          </div>
-        </section>
-
-        <section class="creator-insight quick-assets" aria-label="Quick cut assets">
-          <div class="section-head">
-            <div>
-              <h2>Quick cut assets</h2>
-              <p>Short clips and stills to speed up editing.</p>
-            </div>
-          </div>
-          <div class="asset-scroll">
-            <article class="asset-video-card">
-              <div class="asset-video-thumb"><img src="./assets/product-2.jpg" alt=""><span>▶</span></div>
-              <div class="asset-video-meta"><strong>Fringe movement close-up</strong><span>Product clip · 06s</span></div>
-              <button type="button" data-download-asset>Download</button>
-            </article>
-            <article class="asset-video-card">
-              <div class="asset-video-thumb"><img src="./assets/product-3.jpeg" alt=""><span>▶</span></div>
-              <div class="asset-video-meta"><strong>Full body fit check</strong><span>Try-on clip · 08s</span></div>
-              <button type="button" data-download-asset>Download</button>
-            </article>
-            <article class="asset-video-card">
-              <div class="asset-video-thumb"><img src="./assets/product-4.jpg" alt=""><span>▶</span></div>
-              <div class="asset-video-meta"><strong>Texture detail shot</strong><span>B-roll · 05s</span></div>
-              <button type="button" data-download-asset>Download</button>
-            </article>
-          </div>
-        </section>
+        ${renderProductAssets(product)}
 
         <section class="option-block variant-options" aria-label="Product variants">
           <div class="option-title">Color <span>${product.color}</span></div>
@@ -627,13 +607,159 @@ function renderProduct(id) {
       <div class="create-fan" aria-label="Create actions">
         <button type="button" data-create-action="Shoppable Video">Shoppable Video</button>
         <button type="button" data-create-action="Tryon Post">Tryon Post</button>
-        <button type="button" data-create-action="Shoppable Script">Shoppable Script</button>
-        <button type="button" data-create-action="Cut Assets">Cut Assets</button>
       </div>
     </div>
   `;
 
   bindProductInteractions();
+}
+
+function getProductAssets(product) {
+  const existing = productAssetsByProduct[product.id];
+  if (existing) return existing;
+  return [
+    { id: `${product.id}-generated-1`, title: "Generated try-on", kind: "Video", source: "Generated", duration: "05s", image: product.images[1] || product.image, createdAt: 700 },
+    { id: `${product.id}-filmed-1`, title: "Product detail", kind: "Image", source: "Filmed", duration: "", image: product.images[0], createdAt: 520 },
+    { id: `${product.id}-filmed-2`, title: "Fit check", kind: "Video", source: "Filmed", duration: "06s", image: product.images[2] || product.image, createdAt: 380 }
+  ];
+}
+
+function renderProductAssets(product) {
+  const assets = getProductAssets(product)
+    .filter((asset) => !productAssetFilter || asset.source.toLowerCase() === productAssetFilter)
+    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  const showGenerate = productAssetFilter !== "filmed";
+  return `
+    <section class="creator-insight product-assets" aria-label="Product Assets">
+      <div class="product-assets-head">
+        <div>
+          <h2>Product Assets</h2>
+          <div class="asset-type-tabs" aria-label="Asset filters">
+            <button type="button" data-asset-filter="filmed" aria-pressed="${productAssetFilter === "filmed"}">Filmed</button>
+            <button type="button" data-asset-filter="generated" aria-pressed="${productAssetFilter === "generated"}">Generated</button>
+          </div>
+        </div>
+        <button class="download-all-assets" type="button" data-download-all-assets>Download all</button>
+      </div>
+      <div class="asset-scroll product-asset-row">
+        ${assets.map(renderProductAssetCard).join("")}
+        ${showGenerate ? renderAiGenerateCard() : ""}
+      </div>
+      ${productAssetPanelOpen ? renderProductAssetPanel(product) : ""}
+    </section>
+  `;
+}
+
+function renderProductAssetCard(asset) {
+  const isLoading = asset.status === "loading";
+  const isFailed = asset.status === "failed";
+  return `
+    <article class="product-asset-card ${isLoading ? "is-loading" : ""}">
+      <div class="product-asset-thumb">
+        ${isLoading ? `<span class="asset-spinner"></span>` : `<img src="${asset.image}" alt="">`}
+        <span class="asset-kind">${isLoading ? "Generating" : isFailed ? "Failed" : asset.kind}</span>
+        ${asset.kind === "Video" && !isLoading ? `<span class="asset-play">▶</span>` : ""}
+      </div>
+      <div class="product-asset-meta">
+        <strong>${asset.title}</strong>
+        <div>
+          <span>${asset.source}</span>
+          ${asset.duration ? `<span>${asset.duration}</span>` : ""}
+        </div>
+        ${renderProductAssetAction(asset)}
+      </div>
+    </article>
+  `;
+}
+
+function renderProductAssetAction(asset) {
+  if (asset.status === "loading") {
+    return `
+      <button type="button" data-complete-asset="${asset.id}">Complete</button>
+      <button type="button" data-fail-asset="${asset.id}">Fail</button>
+    `;
+  }
+  if (asset.status === "failed") {
+    return `
+      <button type="button" data-retry-asset="${asset.id}">Retry</button>
+      <button type="button" data-remove-asset="${asset.id}">Remove</button>
+    `;
+  }
+  return `<button type="button" data-download-asset>Download</button>`;
+}
+
+function renderAiGenerateCard() {
+  return `
+    <article class="product-asset-card ai-generate-card" role="button" tabindex="0" data-open-asset-generator>
+      <div class="ai-generate-inner">
+        <span>+</span>
+        <strong>AI generate</strong>
+      </div>
+    </article>
+  `;
+}
+
+function renderProductAssetPanel(product) {
+  if (!productAssetSelectedProductImage) productAssetSelectedProductImage = product.images[0];
+  const selectedAvatar = productAssetAvatars.find((avatar) => avatar.id === productAssetSelectedAvatar) || productAssetAvatars[0];
+  const selectedProductImage = productAssetSelectedProductImage || product.images[0];
+  const selectedTemplate = productAssetTemplates.find((template) => template.id === productAssetSelectedTemplate) || productAssetTemplates[0];
+  const isMobile = document.body.dataset.view === "mobile";
+  return `
+    <div class="asset-generator-backdrop" data-close-asset-generator></div>
+    <section class="asset-generator-panel ${isMobile ? "is-drawer" : "is-modal"}" role="dialog" aria-modal="true" aria-label="Generate new asset">
+      <div class="asset-generator-head">
+        <h3>Generate new asset</h3>
+        <button type="button" data-close-asset-generator aria-label="Close">×</button>
+      </div>
+      <div class="asset-input-row">
+        ${renderAssetInputSummary("avatar", "Avatar", selectedAvatar.label, selectedAvatar.image)}
+        ${renderAssetInputSummary("product", "Product", "Current product", selectedProductImage)}
+      </div>
+      <section class="template-picker">
+        <h4>Template</h4>
+        <div class="template-grid">
+          ${productAssetTemplates.map((template) => `
+            <button class="template-tile" type="button" data-template="${template.id}" aria-pressed="${productAssetSelectedTemplate === template.id}">
+              <img src="${template.image}" alt="">
+              <strong>${template.title}</strong>
+              <span>${template.output}</span>
+            </button>
+          `).join("")}
+        </div>
+      </section>
+      <div class="asset-generator-actions">
+        <span>${selectedTemplate.title} · ${selectedAvatar.label}</span>
+        <button type="button" data-generate-asset>Generate</button>
+      </div>
+    </section>
+  `;
+}
+
+function renderAssetInputSummary(kind, label, value, image) {
+  const expanded = productAssetExpandedInput === kind;
+  const options = kind === "avatar"
+    ? productAssetAvatars
+    : (products.find((item) => item.images.includes(image))?.images || products[0].images).map((src, index) => ({ id: src, label: `Product ${index + 1}`, image: src }));
+  return `
+    <section class="asset-input-summary ${expanded ? "is-expanded" : ""}">
+      <button class="asset-input-trigger" type="button" data-expand-asset-input="${kind}" aria-expanded="${expanded}">
+        <img src="${image}" alt="">
+        <span><strong>${label}</strong><small>${value}</small></span>
+        <em>${expanded ? "Collapse" : "Edit"}</em>
+      </button>
+      ${expanded ? `
+        <div class="asset-input-options">
+          ${options.map((option) => `
+            <button type="button" ${kind === "avatar" ? `data-avatar="${option.id}"` : `data-product-image="${option.image}"`} aria-pressed="${kind === "avatar" ? productAssetSelectedAvatar === option.id : productAssetSelectedProductImage === option.image}">
+              <img src="${option.image}" alt="">
+              <span>${option.label}</span>
+            </button>
+          `).join("")}
+        </div>
+      ` : ""}
+    </section>
+  `;
 }
 
 function bindProductInteractions() {
@@ -699,7 +825,141 @@ function bindProductInteractions() {
     });
   });
 
+  app.querySelector("[data-download-all-assets]")?.addEventListener("click", (event) => {
+    event.currentTarget.textContent = "Downloaded";
+    event.currentTarget.classList.add("is-done");
+  });
+
+  app.querySelectorAll("[data-asset-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetFilter = productAssetFilter === button.dataset.assetFilter ? "" : button.dataset.assetFilter;
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-open-asset-generator]").forEach((card) => {
+    const open = () => {
+      const product = currentProductFromRoute();
+      productAssetSelectedProductImage = product.images[0];
+      productAssetExpandedInput = "";
+      productAssetPanelOpen = true;
+      rerenderCurrentProduct();
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      open();
+    });
+  });
+
+  app.querySelectorAll("[data-close-asset-generator]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetPanelOpen = false;
+      productAssetExpandedInput = "";
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-expand-asset-input]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetExpandedInput = productAssetExpandedInput === button.dataset.expandAssetInput ? "" : button.dataset.expandAssetInput;
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-template]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetSelectedTemplate = button.dataset.template;
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-avatar]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetSelectedAvatar = button.dataset.avatar;
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-product-image]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetSelectedProductImage = button.dataset.productImage;
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelector("[data-generate-asset]")?.addEventListener("click", () => {
+    const product = currentProductFromRoute();
+    const template = productAssetTemplates.find((item) => item.id === productAssetSelectedTemplate) || productAssetTemplates[0];
+    if (!productAssetsByProduct[product.id]) productAssetsByProduct[product.id] = getProductAssets(product);
+    productAssetsByProduct[product.id].unshift({
+      id: `loading-${Date.now()}`,
+      title: template.title,
+      kind: template.output.startsWith("Video") ? "Video" : "Image",
+      source: "Generated",
+      duration: template.output.includes("5s") ? "05s" : "",
+      image: template.image,
+      status: "loading",
+      templateId: template.id,
+      createdAt: Date.now()
+    });
+    productAssetPanelOpen = false;
+    productAssetFilter = "";
+    rerenderCurrentProduct();
+  });
+
+  app.querySelectorAll("[data-complete-asset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      updateProductAssetStatus(button.dataset.completeAsset, "ready");
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-fail-asset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      updateProductAssetStatus(button.dataset.failAsset, "failed");
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-retry-asset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      updateProductAssetStatus(button.dataset.retryAsset, "loading");
+      rerenderCurrentProduct();
+    });
+  });
+
+  app.querySelectorAll("[data-remove-asset]").forEach((button) => {
+    button.addEventListener("click", () => {
+      removeProductAsset(button.dataset.removeAsset);
+      rerenderCurrentProduct();
+    });
+  });
+
   bindCreateFab();
+}
+
+function currentProductFromRoute() {
+  const [, page, id] = (window.location.hash || "").split("/");
+  if (page === "product") return products.find((product) => product.id === id) || products[0];
+  return products[0];
+}
+
+function rerenderCurrentProduct() {
+  renderProduct(currentProductFromRoute().id);
+}
+
+function updateProductAssetStatus(assetId, status) {
+  const product = currentProductFromRoute();
+  const asset = (productAssetsByProduct[product.id] || []).find((item) => item.id === assetId);
+  if (asset) asset.status = status === "ready" ? undefined : status;
+}
+
+function removeProductAsset(assetId) {
+  const product = currentProductFromRoute();
+  const assets = productAssetsByProduct[product.id] || [];
+  productAssetsByProduct[product.id] = assets.filter((asset) => asset.id !== assetId);
 }
 
 function bindCreateFab() {
