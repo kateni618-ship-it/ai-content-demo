@@ -623,6 +623,330 @@ img {
   margin: 8px 0 0;
 }
 
+.discover-page {
+  max-width: 430px;
+  margin: 0 auto;
+  padding: 18px 0 92px;
+  background: #fff;
+}
+
+.discover-controls {
+  position: relative;
+  z-index: 5;
+  padding: 0 15px 14px;
+  background: #fff;
+}
+
+.discover-search {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 43px;
+  padding: 0 13px;
+  border: 1px solid #e0dcd6;
+  border-radius: 11px;
+  background: #f8f7f5;
+  color: #8a847d;
+}
+
+.discover-search input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+}
+
+.discover-filter-row {
+  position: relative;
+  display: flex;
+  gap: 14px;
+  margin-top: 13px;
+}
+
+.discover-filter {
+  position: relative;
+}
+
+.discover-filter > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
+  color: #6f665e;
+  font-size: 14px;
+}
+
+.discover-filter > button.has-selected,
+.discover-filter:first-child > button {
+  border: 1px solid #6b5a49;
+  color: #171717;
+}
+
+.discover-filter-clear {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #6b5a49;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.discover-filter-menu {
+  position: absolute;
+  top: 49px;
+  left: 0;
+  z-index: 7;
+  display: none;
+  width: 194px;
+  padding: 6px 0;
+  border: 1px solid #ece8e0;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 14px 35px rgba(45, 36, 28, 0.12);
+}
+
+.discover-filter.is-open .discover-filter-menu {
+  display: block;
+}
+
+.discover-filter-menu button {
+  width: calc(100% - 16px);
+  min-height: 40px;
+  margin: 2px 8px;
+  padding: 0 12px;
+  border-radius: 9px;
+  color: #4f4942;
+  text-align: left;
+  font-size: 13px;
+}
+
+.discover-filter-menu button.is-selected {
+  background: #6b5a49;
+  color: #fff;
+}
+
+.discover-selected-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid #eee9e2;
+}
+
+.discover-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 0 11px;
+  border: 1px solid #d8d0c7;
+  border-radius: 10px;
+  color: #6b5a49;
+  font-size: 12px;
+}
+
+.discover-chip button {
+  padding: 0;
+  color: #aaa097;
+  font-size: 15px;
+  line-height: 1;
+}
+
+.discover-list {
+  display: grid;
+  gap: 18px;
+}
+
+.discover-card {
+  padding-bottom: 20px;
+}
+
+.discover-video {
+  width: calc(100% - 2px);
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #f1f1f1;
+  object-fit: contain;
+}
+
+.discover-product-strip {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 6px 0;
+}
+
+.discover-product-rail {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.discover-product-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.discover-product-card {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 0 auto;
+  width: min(220px, 68vw);
+  min-height: 58px;
+  padding: 8px;
+  border: 1px solid #e2ddd6;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.discover-product-card img {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 7px;
+  object-fit: cover;
+}
+
+.discover-product-card strong {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.discover-actions {
+  flex: 0 0 auto;
+}
+
+.discover-actions button,
+.discover-picked {
+  display: grid;
+  place-items: center;
+  height: 36px;
+  padding: 0 13px;
+  border: 1px solid #171717;
+  border-radius: 999px;
+  background: #fff;
+  color: #171717;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.discover-picked {
+  border-color: #aaa;
+  background: #f2f2f2;
+  color: #777;
+}
+
+.discover-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.discover-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.58);
+}
+
+.discover-modal-card {
+  position: relative;
+  width: min(100%, 350px);
+  padding: 18px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 22px 70px rgba(0, 0, 0, 0.42);
+}
+
+.discover-modal-card h2 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.discover-modal-card p {
+  margin: 7px 0 12px;
+  color: #736c64;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.discover-modal-products {
+  display: grid;
+  gap: 7px;
+  margin-bottom: 13px;
+}
+
+.discover-modal-products span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #4f4942;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.discover-modal-products img {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.discover-platforms {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.discover-platforms button {
+  min-height: 40px;
+  border: 1px solid #ded8d0;
+  border-radius: 10px;
+  color: #4e4841;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.discover-platforms button.is-active {
+  border-color: #171717;
+  background: #171717;
+  color: #fff;
+}
+
+.discover-download {
+  width: 100%;
+  height: 46px;
+  margin-top: 12px;
+  border-radius: 11px;
+  background: #171717;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+}
+
 .mobile-header {
   display: none;
 }

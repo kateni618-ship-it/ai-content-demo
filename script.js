@@ -293,6 +293,32 @@ let myContentSelectedProductTitles = [];
 let myContentAppliedProductTitles = [];
 let myContentFocusedId = "";
 
+const discoverVideos = [
+  {
+    id: "tryon",
+    title: "Try-on walkthrough",
+    image: "./assets/product-2.jpg",
+    productIds: ["fringe-dress", "strapless-mini"]
+  },
+  {
+    id: "detail",
+    title: "Clean product showcase",
+    image: "./assets/product-3.jpeg",
+    productIds: ["summer-set"]
+  },
+  {
+    id: "lifestyle",
+    title: "Lifestyle styling clip",
+    image: "./assets/product-4.jpg",
+    productIds: ["linen-shirt", "resort-skirt", "fringe-dress"]
+  }
+];
+
+const discoverFilters = {
+  category: ["Clothing", "Sports Dresses", "Bags & Luggage", "Accessories"],
+  style: ["Classic Tailoring", "Ivy/Trad", "Chanel-chic", "Quiet Luxury"]
+};
+
 const defaultSettings = {
   tone: "Friendly",
   platform: "TikTok",
@@ -343,6 +369,15 @@ const productAssetsByProduct = {
     { id: "filmed-3", title: "Texture detail pack", kind: "Image", source: "Filmed", duration: "", image: "./assets/product-4.jpg", photos: ["./assets/product-4.jpg", "./assets/product-3.jpeg", "./assets/product-2.jpg"], createdAt: 250 }
   ]
 };
+
+let discoverSearch = "";
+let discoverOpenFilter = "";
+let discoverSelectedFilters = {
+  category: [],
+  style: []
+};
+let discoverPicked = false;
+let discoverModalVideo = null;
 
 function syncViewButtons() {
   const currentView = document.body.dataset.view || "mobile";
@@ -407,6 +442,9 @@ function route() {
   } else if (page === "mine") {
     document.body.dataset.page = "mine";
     renderMine();
+  } else if (page === "discover") {
+    document.body.dataset.page = "discover";
+    renderDiscover();
   } else if (page === "museland" || page === "pick") {
     document.body.dataset.page = page;
     renderPlaceholder(page);
@@ -2326,6 +2364,184 @@ function typeContentKit(text) {
       window.clearInterval(timer);
     }
   }, 18);
+}
+
+function getDiscoverProducts(video) {
+  return video.productIds
+    .map((id) => products.find((product) => product.id === id))
+    .filter(Boolean);
+}
+
+function renderDiscoverFilter(type, label) {
+  const selected = discoverSelectedFilters[type];
+  const open = discoverOpenFilter === type;
+
+  return `
+    <div class="discover-filter ${open ? "is-open" : ""}">
+      <button class="${selected.length ? "has-selected" : ""}" type="button" data-discover-filter="${type}" aria-expanded="${open}">
+        <span>${label}</span>
+        ${selected.length ? `<span class="discover-filter-clear" data-discover-clear="${type}">x</span>` : ""}
+        <span class="discover-filter-chevron">${open ? "^" : "v"}</span>
+      </button>
+      <div class="discover-filter-menu">
+        ${discoverFilters[type].map((option) => `
+          <button class="${selected.includes(option) ? "is-selected" : ""}" type="button" data-discover-option="${type}:${option}">
+            ${option}
+          </button>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderDiscover() {
+  const selected = [
+    ...discoverSelectedFilters.category.map((value) => ({ type: "category", value })),
+    ...discoverSelectedFilters.style.map((value) => ({ type: "style", value }))
+  ];
+
+  app.innerHTML = `
+    <section class="discover-page" aria-label="Discover">
+      <div class="discover-controls">
+        <label class="discover-search">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m16 16 4 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input type="search" value="${discoverSearch}" placeholder="Search videos" data-discover-search>
+        </label>
+        <div class="discover-filter-row">
+          ${renderDiscoverFilter("category", "Category")}
+          ${renderDiscoverFilter("style", "Style")}
+        </div>
+        ${selected.length ? `
+          <div class="discover-selected-row">
+            ${selected.map((item) => `
+              <span class="discover-chip">${item.value}<button type="button" data-discover-remove="${item.type}:${item.value}" aria-label="Remove ${item.value}">x</button></span>
+            `).join("")}
+          </div>
+        ` : ""}
+      </div>
+
+      <div class="discover-list">
+        ${discoverVideos.map((video) => {
+          const relatedProducts = getDiscoverProducts(video);
+          return `
+            <article class="discover-card" data-discover-card="${video.id}">
+              <img class="discover-video" src="${video.image}" alt="${video.title}">
+              <section class="discover-product-strip">
+                <div class="discover-product-rail" aria-label="Related products">
+                  ${relatedProducts.map((product) => `
+                    <div class="discover-product-card">
+                      <img src="${product.image}" alt="">
+                      <strong>${product.title}</strong>
+                    </div>
+                  `).join("")}
+                </div>
+                <div class="discover-actions">
+                  ${discoverPicked ? `<span class="discover-picked">Picked</span>` : `<button type="button" data-discover-publish="${video.id}">Pick & Publish</button>`}
+                </div>
+              </section>
+            </article>
+          `;
+        }).join("")}
+      </div>
+
+      ${discoverModalVideo ? renderDiscoverPublishModal(discoverModalVideo) : ""}
+    </section>
+  `;
+
+  bindDiscover();
+}
+
+function renderDiscoverPublishModal(videoId) {
+  const video = discoverVideos.find((item) => item.id === videoId);
+  const relatedProducts = video ? getDiscoverProducts(video) : [];
+  return `
+    <div class="discover-modal" role="dialog" aria-modal="true" aria-label="Pick and publish">
+      <button class="discover-modal-backdrop" type="button" aria-label="Close" data-discover-close></button>
+      <section class="discover-modal-card">
+        <h2>Pick & Publish</h2>
+        <p>${relatedProducts.length} product${relatedProducts.length === 1 ? "" : "s"} will be picked with this video.</p>
+        <div class="discover-modal-products">
+          ${relatedProducts.map((product) => `
+            <span><img src="${product.image}" alt="">${product.title}</span>
+          `).join("")}
+        </div>
+        <div class="discover-platforms" aria-label="Choose platform">
+          ${["TikTok", "Instagram", "YouTube"].map((platform, index) => `
+            <button class="${index === 0 ? "is-active" : ""}" type="button">${platform}</button>
+          `).join("")}
+        </div>
+        <button class="discover-download" type="button" data-discover-download>Download</button>
+      </section>
+    </div>
+  `;
+}
+
+function bindDiscover() {
+  app.querySelector("[data-discover-search]")?.addEventListener("input", (event) => {
+    discoverSearch = event.target.value;
+  });
+
+  app.querySelectorAll("[data-discover-filter]").forEach((button) => {
+    button.addEventListener("click", () => {
+      discoverOpenFilter = discoverOpenFilter === button.dataset.discoverFilter ? "" : button.dataset.discoverFilter;
+      renderDiscover();
+    });
+  });
+
+  app.querySelectorAll("[data-discover-clear]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      discoverSelectedFilters[button.dataset.discoverClear] = [];
+      renderDiscover();
+    });
+  });
+
+  app.querySelectorAll("[data-discover-option]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const [type, value] = button.dataset.discoverOption.split(":");
+      const selected = discoverSelectedFilters[type];
+      discoverSelectedFilters[type] = selected.includes(value)
+        ? selected.filter((item) => item !== value)
+        : [...selected, value];
+      renderDiscover();
+    });
+  });
+
+  app.querySelectorAll("[data-discover-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const [type, value] = button.dataset.discoverRemove.split(":");
+      discoverSelectedFilters[type] = discoverSelectedFilters[type].filter((item) => item !== value);
+      renderDiscover();
+    });
+  });
+
+  app.querySelectorAll("[data-discover-publish]").forEach((button) => {
+    button.addEventListener("click", () => {
+      discoverModalVideo = button.dataset.discoverPublish;
+      renderDiscover();
+    });
+  });
+
+  app.querySelectorAll("[data-discover-close]").forEach((button) => {
+    button.addEventListener("click", () => {
+      discoverModalVideo = null;
+      renderDiscover();
+    });
+  });
+
+  app.querySelectorAll(".discover-platforms button").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.parentElement.querySelectorAll("button").forEach((item) => {
+        item.classList.toggle("is-active", item === button);
+      });
+    });
+  });
+
+  app.querySelector("[data-discover-download]")?.addEventListener("click", () => {
+    discoverPicked = true;
+    discoverModalVideo = null;
+    renderDiscover();
+  });
 }
 
 function renderMine() {
