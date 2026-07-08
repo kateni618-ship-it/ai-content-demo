@@ -1303,6 +1303,46 @@ img {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.07);
 }
 
+.asset-download-hint {
+  display: grid;
+  gap: 5px;
+  margin-top: 9px;
+  padding: 9px 10px;
+  border: 1px solid rgba(200, 138, 71, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 249, 239, 0.78);
+}
+
+.asset-download-hint p {
+  position: relative;
+  margin: 0;
+  padding-left: 11px;
+  color: #6f6257;
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.asset-download-hint p::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0.55em;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.asset-download-hint button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--gold);
+  font: inherit;
+  font-weight: 950;
+}
+
 .download-all-assets {
   flex: 0 0 auto;
   height: 30px;

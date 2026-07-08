@@ -754,6 +754,10 @@ function renderProductAssets(product) {
             <button type="button" data-asset-filter="video" aria-pressed="${productAssetFilter === "video"}">Video</button>
             <button type="button" data-asset-filter="image" aria-pressed="${productAssetFilter === "image"}">Image</button>
           </div>
+          <div class="asset-download-hint" aria-label="Download rules">
+            <p>One ready-to-post download per product. Mark it as posted to download new content.</p>
+            <p>You’ve downloaded one content. Mark it as posted first to get more. <button type="button">Mark as Posted &gt;</button></p>
+          </div>
         </div>
       </div>
       <div class="asset-scroll product-asset-row">
