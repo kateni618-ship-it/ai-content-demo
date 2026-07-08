@@ -1335,9 +1335,7 @@ function renderContentDownloadPage(productId, assetId) {
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18L9 12L15 6"/></svg>
       </button>
       <span>Download Content</span>
-      <button type="button" aria-label="Close" data-back-product-content>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18"/></svg>
-      </button>
+      <span class="mobile-header-spacer" aria-hidden="true"></span>
     </header>
 
     <section class="content-download-page" aria-label="Download content">
