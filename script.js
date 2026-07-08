@@ -66,7 +66,11 @@ const bannerSlots = [
 ];
 
 function maxEarnLabel(product) {
-  return `Earn up to ${product.commission.split("-").pop()}`;
+  return `Earn ${product.commission.split("-").pop()}`;
+}
+
+function earnPerOrderLabel(product) {
+  return `Earn ${product.earn} per order`;
 }
 
 const creatorExamples = [
@@ -147,7 +151,19 @@ const musePieces = [
   { id: "bottom-1", category: "Bottom", title: "Low Rise Resort Maxi Skirt", price: "$39.9", image: "./assets/product-8.jpg" }
 ];
 
-const contentTabs = ["All", "Posts", "Videos", "Requests"];
+const contentStatusTabs = [
+  { id: "all", label: "All" },
+  { id: "ready", label: "Ready to Post" },
+  { id: "making", label: "Making" },
+  { id: "posted", label: "Posted" },
+  { id: "failed", label: "Failed" },
+  { id: "discarded", label: "Discarded" }
+];
+
+const contentTypeTabs = [
+  { id: "image", label: "Image Post" },
+  { id: "video", label: "Video" }
+];
 
 const postBatches = [
   {
@@ -187,6 +203,96 @@ const videoBatches = [
   }
 ];
 
+let myContentItems = [
+  {
+    id: "content-1",
+    title: "Fringe dress summer launch carousel",
+    status: "ready",
+    type: "image",
+    contentTypeLabel: "Image Post",
+    createdAt: "2026-07-03",
+    media: ["./assets/product-2.jpg", "./assets/product-3.jpeg", "./assets/product-4.jpg", "./assets/product-2.jpg"],
+    products: [
+      { title: "Fringe Detail Halter Maxi Dress", image: "./assets/product-1.jpg" },
+      { title: "Summer Strap Sandals", image: "./assets/product-6.jpg" }
+    ],
+    postedLinks: {}
+  },
+  {
+    id: "content-2",
+    title: "Strapless sculpt mini dress story set",
+    status: "ready",
+    type: "image",
+    contentTypeLabel: "Image Post",
+    createdAt: "2026-06-30",
+    media: ["./assets/product-5.jpg", "./assets/product-6.jpg", "./assets/product-5.jpg"],
+    products: [{ title: "Strapless Sculpt Mini Dress", image: "./assets/product-5.jpg" }],
+    postedLinks: {}
+  },
+  {
+    id: "content-3",
+    title: "Fringe dress shoppable short video",
+    status: "ready",
+    type: "video",
+    contentTypeLabel: "Video",
+    videoType: "Shoppable Video",
+    createdAt: "2026-07-01",
+    media: ["./assets/product-4.jpg"],
+    products: [{ title: "Fringe Detail Halter Maxi Dress", image: "./assets/product-2.jpg" }],
+    postedLinks: {}
+  },
+  {
+    id: "content-4",
+    title: "Soft summer styling image post",
+    status: "making",
+    type: "image",
+    contentTypeLabel: "Image Post",
+    createdAt: "2026-07-05",
+    media: [],
+    products: [{ title: "Soft Summer Styling Set", image: "./assets/product-3.jpeg" }],
+    postedLinks: {}
+  },
+  {
+    id: "content-5",
+    title: "Vacation picks Pinterest post",
+    status: "making",
+    type: "image",
+    contentTypeLabel: "Image Post",
+    createdAt: "2026-07-04",
+    media: [],
+    products: [{ title: "Low Rise Resort Maxi Skirt", image: "./assets/product-8.jpg" }],
+    postedLinks: {}
+  },
+  {
+    id: "content-6",
+    title: "Ivory resort outfit posted set",
+    status: "posted",
+    type: "image",
+    contentTypeLabel: "Image Post",
+    createdAt: "2026-06-23",
+    media: ["./assets/product-3.jpeg", "./assets/product-4.jpg"],
+    products: [{ title: "Fringe Detail Halter Maxi Dress", image: "./assets/product-1.jpg" }],
+    postedLinks: { instagram: "https://instagram.com/p/demo" }
+  },
+  {
+    id: "content-7",
+    title: "Weekend edit image post",
+    status: "failed",
+    type: "image",
+    contentTypeLabel: "Image Post",
+    createdAt: "2026-06-22",
+    media: ["./assets/product-6.jpg"],
+    products: [{ title: "Minimal Leather Loafers", image: "./assets/product-7.jpg" }],
+    postedLinks: {}
+  }
+];
+
+let addedProductAssetIds = new Set();
+let myContentProductQuery = "";
+let myContentSelectedProductTitles = [];
+let myContentAppliedProductTitles = [];
+let myContentFocusedId = "";
+
 const defaultSettings = {
   tone: "Friendly",
   platform: "TikTok",
@@ -207,34 +313,34 @@ let museBriefState = {
   photoEnabled: false
 };
 let museRequests = [];
-let productAssetFeatureFilter = "";
-let productAssetTypeFilter = "";
+let productAssetFilter = "video";
 let productAssetPanelOpen = false;
 let productAssetExpandedInput = "";
-let productAssetSelectedFormat = "tryon-clip";
+let productAssetSelectedTemplate = "tryon-clip";
 let productAssetSelectedAvatar = "mine";
 let productAssetSelectedProductImage = "";
-const currentUserId = "user-current";
+let productAssetPreview = null;
+let productAssetPreviewPhotoIndex = 0;
+let contentDownloadPlatforms = [];
 const productAssetAvatars = [
   { id: "mine", label: "My Avatar", type: "user", image: "./assets/default-avatar.svg" },
   { id: "official-1", label: "Official 1", type: "official", image: "./assets/product-4.jpg" },
   { id: "official-2", label: "Official 2", type: "official", image: "./assets/product-5.jpg" },
   { id: "official-3", label: "Official 3", type: "official", image: "./assets/product-6.jpg" }
 ];
-const productAssetFormats = [
-  { id: "tryon-clip", title: "Avatar try-on", output: "Video", image: "./assets/product-2.jpg" },
-  { id: "detail-motion", title: "Detail motion", output: "Video", image: "./assets/product-3.jpeg" },
+const productAssetTemplates = [
+  { id: "tryon-clip", title: "Avatar try-on", output: "Video · 5s", image: "./assets/product-2.jpg" },
+  { id: "detail-motion", title: "Detail motion", output: "Video · 5s", image: "./assets/product-3.jpeg" },
   { id: "studio-still", title: "Studio still", output: "Image", image: "./assets/product-7.jpg" },
   { id: "hanger-still", title: "Hanger still", output: "Image", image: "./assets/product-8.jpg" }
 ];
 const productAssetsByProduct = {
   "fringe-dress": [
-    { id: "generated-1", kind: "Video", source: "Generated", ownerUserId: "user-current", image: "./assets/product-5.jpg", createdAt: 800, featureTags: ["try-on"] },
-    { id: "generated-2", kind: "Image", source: "Generated", ownerUserId: "user-current", image: "./assets/product-7.jpg", createdAt: 650, featureTags: ["fabric"] },
-    { id: "filmed-1", kind: "Image", source: "Filmed", ownerUserId: null, image: "./assets/product-2.jpg", createdAt: 500, featureTags: ["try-on"] },
-    { id: "filmed-2", kind: "Video", source: "Filmed", ownerUserId: null, image: "./assets/product-3.jpeg", createdAt: 400, featureTags: ["detail"] },
-    { id: "filmed-3", kind: "Image", source: "Filmed", ownerUserId: null, image: "./assets/product-4.jpg", createdAt: 250, featureTags: ["fabric", "detail"] },
-    { id: "hidden-other-user", kind: "Video", source: "Generated", ownerUserId: "user-other", image: "./assets/product-8.jpg", createdAt: 900, featureTags: ["try-on"] }
+    { id: "generated-1", title: "Avatar try-on clip", kind: "Video", source: "Generated", duration: "05s", image: "./assets/product-5.jpg", createdAt: 800 },
+    { id: "generated-2", title: "Studio product stills", kind: "Image", source: "Generated", duration: "", image: "./assets/product-7.jpg", photos: ["./assets/product-7.jpg", "./assets/product-1.jpg", "./assets/product-4.jpg"], createdAt: 650 },
+    { id: "filmed-1", title: "Full body try-on set", kind: "Image", source: "Filmed", duration: "", image: "./assets/product-2.jpg", photos: ["./assets/product-2.jpg", "./assets/product-1.jpg", "./assets/product-3.jpeg"], createdAt: 500 },
+    { id: "filmed-2", title: "Fringe movement", kind: "Video", source: "Filmed", duration: "06s", image: "./assets/product-3.jpeg", createdAt: 400 },
+    { id: "filmed-3", title: "Texture detail pack", kind: "Image", source: "Filmed", duration: "", image: "./assets/product-4.jpg", photos: ["./assets/product-4.jpg", "./assets/product-3.jpeg", "./assets/product-2.jpg"], createdAt: 250 }
   ]
 };
 
@@ -277,6 +383,9 @@ function route() {
   if (page === "product") {
     document.body.dataset.page = "product";
     renderProduct(id);
+  } else if (page === "content-download") {
+    document.body.dataset.page = "content-download";
+    renderContentDownloadPage(id, step);
   } else if (page === "creator-breakdown") {
     document.body.dataset.page = "creator-breakdown";
     renderCreatorBreakdown(id);
@@ -294,7 +403,7 @@ function route() {
     renderMuseNext(id);
   } else if (page === "my-content") {
     document.body.dataset.page = "my-content";
-    renderMyContent(id || "All");
+    renderMyContent(id || "all", step || "all");
   } else if (page === "mine") {
     document.body.dataset.page = "mine";
     renderMine();
@@ -310,7 +419,7 @@ function route() {
 }
 
 function setActiveTab(page) {
-  const tab = ["product", "creator-breakdown", "structure-setup", "content-kit", "muse-brief", "muse-next", "my-content", "create"].includes(page) ? "select" : page;
+  const tab = ["product", "content-download", "creator-breakdown", "structure-setup", "content-kit", "muse-brief", "muse-next", "my-content", "create"].includes(page) ? "select" : page;
   tabButtons.forEach((button) => {
     button.classList.toggle("is-active", button.dataset.tab === tab);
   });
@@ -439,7 +548,6 @@ function renderSelect() {
               <strong>${product.price}</strong>
               <span>${maxEarnLabel(product)}</span>
             </div>
-            <p>Extra Earn +${product.commission.split("-").pop()}</p>
           </div>
         </article>
       `).join("")}
@@ -537,50 +645,67 @@ function renderProduct(id) {
 
         <div class="price-row">
           <strong>${product.price}</strong>
-          <span>${maxEarnLabel(product)}</span>
+          <span>${earnPerOrderLabel(product)}</span>
         </div>
 
         <section class="commission-card" aria-label="Commission options">
           <div class="commission-card-header">
             <span>Commission</span>
-            <strong>Earn more with MUSE content</strong>
           </div>
           <div class="commission-options">
-            <article class="commission-option" role="button" tabindex="0">
+            <article class="commission-option is-direct" role="button" tabindex="0">
               <span class="commission-name">Direct Promote</span>
               <strong>${product.commission.split("-")[0]}</strong>
-              <span class="commission-note">Earn standard commission</span>
+              <span class="commission-note">Earn $6.59 commission</span>
             </article>
-            <article class="commission-option is-active" role="button" tabindex="0">
+            <span class="commission-vs" aria-hidden="true">VS</span>
+            <article class="commission-option is-create is-active" role="button" tabindex="0">
               <span class="recommend-tag">Recommended</span>
-              <span class="commission-name">Create Content</span>
+              <span class="commission-name">Make Content For Me</span>
               <span class="commission-rate">
                 <strong>${product.commission.split("-").pop()}</strong>
-                <button class="extra-bonus" type="button" data-extra-create-toggle>EXTRA 5%</button>
+                <button class="extra-bonus" type="button" data-extra-create-toggle aria-label="Create content for me">Create →</button>
               </span>
-              <span class="commission-note">Earn ${product.earn} commission</span>
+              <span class="commission-note">${earnPerOrderLabel(product)}</span>
+              <span class="commission-extra-note">+5% with ready-to-post content</span>
             </article>
+          </div>
+        </section>
+
+        <section class="option-block variant-options" aria-label="Product variants">
+          <div class="option-row">
+            <div class="option-title">Color</div>
+            <div class="swatches">
+              <button class="swatch is-active" type="button" aria-label="Ivory"></button>
+              <button class="swatch dark" type="button" aria-label="Black"></button>
+              <button class="swatch warm" type="button" aria-label="Taupe"></button>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-title">Size</div>
+            <div class="sizes">
+              <button type="button">XS</button>
+              <button class="is-active" type="button">S</button>
+              <button type="button">M</button>
+              <button type="button">L</button>
+              <button type="button">XL</button>
+            </div>
+          </div>
+          <div class="option-row">
+            <div class="option-title">Brand</div>
+            <p>${product.brand || "MuseSelect"}</p>
+          </div>
+          <div class="option-row">
+            <div class="option-title">Material</div>
+            <p>${product.material || "Lightweight woven blend"}</p>
+          </div>
+          <div class="option-row shipping-row">
+            <div class="option-title">Shipping</div>
+            <p>Local ship eligible</p>
           </div>
         </section>
 
         ${renderProductAssets(product)}
-
-        <section class="option-block variant-options" aria-label="Product variants">
-          <div class="option-title">Color <span>${product.color}</span></div>
-          <div class="swatches">
-            <button class="swatch is-active" type="button" aria-label="Ivory"></button>
-            <button class="swatch dark" type="button" aria-label="Black"></button>
-            <button class="swatch warm" type="button" aria-label="Taupe"></button>
-          </div>
-          <div class="option-title size-title">Size <span>S</span></div>
-          <div class="sizes">
-            <button type="button">XS</button>
-            <button class="is-active" type="button">S</button>
-            <button type="button">M</button>
-            <button type="button">L</button>
-            <button type="button">XL</button>
-          </div>
-        </section>
 
         <section class="accordion">
           <details open>
@@ -591,27 +716,15 @@ function renderProduct(id) {
             <summary>Size Guide</summary>
             <p>Available sizes: XS, S, M, L, XL. Choose your regular size for a close fit.</p>
           </details>
-          <details>
-            <summary>Shipping</summary>
-            <p>Local ship eligible. Delivery timing varies by destination and stock status.</p>
-          </details>
         </section>
       </section>
     </section>
 
     <div class="sticky-actions" aria-label="Product actions">
       <button class="secondary" type="button">Pick</button>
-      <button class="primary" type="button">Promote</button>
+      <button class="primary" type="button" data-promote-open>Promote</button>
     </div>
 
-    <div class="create-fab" data-create-fab style="--fab-x: calc(100vw - 112px); --fab-y: 52vh;">
-      <button class="create-main" type="button" aria-expanded="false" data-create-toggle>+Create</button>
-      <span class="create-bonus">Earn +5%</span>
-      <div class="create-fan" aria-label="Create actions">
-        <button type="button" data-create-action="Shoppable Video">Shoppable Video</button>
-        <button type="button" data-create-action="Tryon Post">Tryon Post</button>
-      </div>
-    </div>
   `;
 
   bindProductInteractions();
@@ -621,46 +734,31 @@ function getProductAssets(product) {
   const existing = productAssetsByProduct[product.id];
   if (existing) return existing;
   return [
-    { id: `${product.id}-generated-1`, kind: "Video", source: "Generated", ownerUserId: "user-current", image: product.images[1] || product.image, createdAt: 700, featureTags: ["try-on"] },
-    { id: `${product.id}-filmed-1`, kind: "Image", source: "Filmed", ownerUserId: null, image: product.images[0], createdAt: 520, featureTags: ["detail", "fabric"] },
-    { id: `${product.id}-filmed-2`, kind: "Video", source: "Filmed", ownerUserId: null, image: product.images[2] || product.image, createdAt: 380, featureTags: ["try-on"] }
+    { id: `${product.id}-generated-1`, title: "Generated try-on", kind: "Video", source: "Generated", duration: "05s", image: product.images[1] || product.image, createdAt: 700 },
+    { id: `${product.id}-filmed-1`, title: "Product detail pack", kind: "Image", source: "Filmed", duration: "", image: product.images[0], photos: product.images.slice(0, 3), createdAt: 520 },
+    { id: `${product.id}-filmed-2`, title: "Fit check", kind: "Video", source: "Filmed", duration: "06s", image: product.images[2] || product.image, createdAt: 380 }
   ];
 }
 
 function renderProductAssets(product) {
   const assets = getProductAssets(product)
-    .filter((asset) => !asset.ownerUserId || asset.ownerUserId === currentUserId)
-    .filter((asset) => !productAssetFeatureFilter || asset.featureTags?.includes(productAssetFeatureFilter))
-    .filter((asset) => !productAssetTypeFilter || asset.kind.toLowerCase() === productAssetTypeFilter)
+    .filter((asset) => !productAssetFilter || asset.kind.toLowerCase() === productAssetFilter)
     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   return `
-    <section class="creator-insight product-assets" aria-label="Product Assets">
+    <section class="creator-insight product-assets" aria-label="Content ready to post">
       <div class="product-assets-head">
         <div>
-          <div class="product-assets-title-row">
-            <h2>Product Assets</h2>
-            <button class="asset-generate-link" type="button" data-open-asset-generator aria-label="Create with your avatar">
-              <span class="ai-create-icon">${renderAvatarCreateIcon()}</span>
-              <span class="ai-create-label">Create with your avatar</span>
-            </button>
-          </div>
-          <div class="product-assets-control-row">
-            <div class="asset-filter-bar" aria-label="Asset filters">
-              <div class="asset-feature-tabs" aria-label="Feature filters">
-                ${["fabric", "detail", "try-on"].map((tag) => `<button type="button" data-asset-feature-filter="${tag}" aria-pressed="${productAssetFeatureFilter === tag}">${tag}</button>`).join("")}
-              </div>
-              <div class="asset-filter-divider" aria-hidden="true"></div>
-              <div class="asset-type-tabs" aria-label="Asset type filters">
-                <button type="button" data-asset-type-filter="image" aria-pressed="${productAssetTypeFilter === "image"}" aria-label="Image">${renderAssetKindIcon("Image")}</button>
-                <button type="button" data-asset-type-filter="video" aria-pressed="${productAssetTypeFilter === "video"}" aria-label="Video">${renderAssetKindIcon("Video")}</button>
-              </div>
-            </div>
+          <h2>Content ready to post</h2>
+          <p>Post & Earn +5% Commission per Order</p>
+          <div class="asset-type-tabs" aria-label="Asset filters">
+            <button type="button" data-asset-filter="video" aria-pressed="${productAssetFilter === "video"}">Video</button>
+            <button type="button" data-asset-filter="image" aria-pressed="${productAssetFilter === "image"}">Image</button>
           </div>
         </div>
       </div>
       <div class="asset-scroll product-asset-row">
         ${assets.map(renderProductAssetCard).join("")}
-        ${renderAiGenerateCard(product)}
+        ${renderAiGenerateCard(productAssetFilter || "video")}
       </div>
       ${productAssetPanelOpen ? renderProductAssetPanel(product) : ""}
     </section>
@@ -670,32 +768,51 @@ function renderProductAssets(product) {
 function renderProductAssetCard(asset) {
   const isLoading = asset.status === "loading";
   const isFailed = asset.status === "failed";
+  const product = currentProductFromRoute();
+  const photos = getAssetPhotos(asset, product);
+  const infoLabel = asset.kind === "Video" ? formatAssetDuration(asset.duration) : `${photos.length} photos`;
   return `
-    <article class="product-asset-card ${isLoading ? "is-loading" : ""}" tabindex="0">
+    <article class="product-asset-card ${isLoading ? "is-loading" : ""}" ${!isLoading && !isFailed ? `role="button" tabindex="0" data-open-product-asset="${product.id}:${asset.id}"` : ""}>
       <div class="product-asset-thumb">
-        ${isLoading ? `<span class="asset-spinner"></span>` : `<img src="${asset.image}" alt="">`}
-        <span class="asset-kind">${renderAssetKindIcon(asset.kind)}</span>
-        <span class="asset-source">${isLoading ? "Generated" : isFailed ? "Generated" : asset.source}</span>
+        ${isLoading ? `<span class="asset-spinner"></span>` : asset.kind === "Image" ? renderAssetPhotoStack(asset, photos) : `<img src="${asset.image}" alt="">`}
+        ${asset.kind === "Video" && !isLoading ? `<span class="asset-play">▶</span>` : ""}
+        ${!isLoading && !isFailed && asset.kind !== "Image" ? `<span class="asset-info">${infoLabel}</span>` : ""}
       </div>
       <div class="product-asset-meta">
-        ${renderProductAssetAction(asset)}
+        <strong>${asset.title}</strong>
+        ${isLoading || isFailed ? `<div>${renderProductAssetAction(asset, product, false)}</div>` : ""}
       </div>
     </article>
   `;
 }
 
-function renderAssetKindIcon(kind) {
-  if (kind === "Video") {
-    return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 7.5A2.5 2.5 0 0 1 7 5h7.2a2.5 2.5 0 0 1 2.5 2.5v9A2.5 2.5 0 0 1 14.2 19H7a2.5 2.5 0 0 1-2.5-2.5v-9Z"/><path d="m16.7 10 3.8-2.2v8.4L16.7 14v-4Z"/></svg>`;
-  }
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.7"/><path d="m6.8 16 4.1-4.1 2.8 2.8 1.7-1.7 2.8 3"/></svg>`;
+function renderAssetPhotoStack(asset, photos) {
+  return `
+    <div class="asset-photo-stack" aria-label="${asset.title} image pack">
+      ${photos.slice(0, 3).map((photo, index) => `
+        <img class="asset-photo-layer-${index}" src="${photo}" alt="${index === 0 ? asset.title : ""}">
+      `).join("")}
+      <span>${photos.length} photos</span>
+    </div>
+  `;
 }
 
-function renderAvatarCreateIcon() {
-  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7.2 18.7c.7-2.4 2.4-3.8 4.8-3.8s4.1 1.4 4.8 3.8"/><circle cx="12" cy="10" r="3.1"/><path d="M18.2 4.4l.5 1.3 1.3.5-1.3.5-.5 1.3-.5-1.3-1.3-.5 1.3-.5.5-1.3Z"/><path d="M5.4 5.7l.3.8.8.3-.8.3-.3.8-.3-.8-.8-.3.8-.3.3-.8Z"/></svg>`;
+function formatAssetDuration(duration) {
+  return String(duration || "6s").replace(/^0/, "");
 }
 
-function renderProductAssetAction(asset) {
+function getAssetPhotos(asset, product) {
+  if (asset.photos?.length) return asset.photos;
+  return asset.kind === "Image" ? [asset.image, ...product.images.filter((image) => image !== asset.image)].slice(0, 3) : [asset.image];
+}
+
+function getProductAssetById(productId, assetId) {
+  const product = products.find((item) => item.id === productId) || currentProductFromRoute();
+  const asset = getProductAssets(product).find((item) => item.id === assetId);
+  return { product, asset };
+}
+
+function renderProductAssetAction(asset, product, isAdded) {
   if (asset.status === "loading") {
     return `
       <button type="button" data-complete-asset="${asset.id}">Complete</button>
@@ -708,21 +825,21 @@ function renderProductAssetAction(asset) {
       <button type="button" data-remove-asset="${asset.id}">Remove</button>
     `;
   }
-  return `<button type="button" data-download-asset>Download</button>`;
+  return "";
 }
 
-function renderAiGenerateCard(product) {
-  const selectedAvatar = productAssetAvatars.find((avatar) => avatar.id === productAssetSelectedAvatar) || productAssetAvatars[0];
-  const productImage = productAssetSelectedProductImage || product.images[0];
+function renderAiGenerateCard(kind = "video") {
+  const isImage = kind === "image";
   return `
-    <article class="product-asset-card ai-generate-card" role="button" tabindex="0" data-open-asset-generator>
+    <article class="product-asset-card ai-generate-card ${isImage ? "is-image" : "is-video"}" role="button" tabindex="0" data-open-asset-generator>
       <div class="ai-generate-inner">
-        <span>+</span>
-        <strong>Create with your avatar</strong>
-        <div class="ai-generate-pair">
-          <i><img src="${selectedAvatar.image}" alt=""></i>
-          <i><img src="${productImage}" alt=""></i>
+        <div class="ai-generate-preview">
+          <i></i>
+          <b>+</b>
         </div>
+        <strong>${isImage ? "Make ready-to-post images for me" : "Make ready-to-post video for me"}</strong>
+        <p>Tell us what content you want. Muse can create it for this product.</p>
+        <em>${isImage ? "Custom images" : "Custom video"}</em>
       </div>
     </article>
   `;
@@ -732,13 +849,13 @@ function renderProductAssetPanel(product) {
   if (!productAssetSelectedProductImage) productAssetSelectedProductImage = product.images[0];
   const selectedAvatar = productAssetAvatars.find((avatar) => avatar.id === productAssetSelectedAvatar) || productAssetAvatars[0];
   const selectedProductImage = productAssetSelectedProductImage || product.images[0];
-  const selectedFormat = productAssetFormats.find((format) => format.id === productAssetSelectedFormat) || productAssetFormats[0];
+  const selectedTemplate = productAssetTemplates.find((template) => template.id === productAssetSelectedTemplate) || productAssetTemplates[0];
   const isMobile = document.body.dataset.view === "mobile";
   return `
     <div class="asset-generator-backdrop" data-close-asset-generator></div>
-    <section class="asset-generator-panel ${isMobile ? "is-drawer" : "is-modal"}" role="dialog" aria-modal="true" aria-label="Create with your avatar">
+    <section class="asset-generator-panel ${isMobile ? "is-drawer" : "is-modal"}" role="dialog" aria-modal="true" aria-label="Generate new asset">
       <div class="asset-generator-head">
-        <h3>Create with your avatar</h3>
+        <h3>Generate new asset</h3>
         <button type="button" data-close-asset-generator aria-label="Close">×</button>
       </div>
       <div class="asset-input-row">
@@ -746,19 +863,19 @@ function renderProductAssetPanel(product) {
         ${renderAssetInputSummary("product", "Product", "Current product", selectedProductImage)}
       </div>
       <section class="template-picker">
-        <h4>Format</h4>
+        <h4>Template</h4>
         <div class="template-grid">
-          ${productAssetFormats.map((format) => `
-            <button class="template-tile" type="button" data-format="${format.id}" aria-pressed="${productAssetSelectedFormat === format.id}">
-              <img src="${format.image}" alt="">
-              <strong>${format.title}</strong>
-              <span>${format.output}</span>
+          ${productAssetTemplates.map((template) => `
+            <button class="template-tile" type="button" data-template="${template.id}" aria-pressed="${productAssetSelectedTemplate === template.id}">
+              <img src="${template.image}" alt="">
+              <strong>${template.title}</strong>
+              <span>${template.output}</span>
             </button>
           `).join("")}
         </div>
       </section>
       <div class="asset-generator-actions">
-        <span>${selectedFormat.title} · ${selectedAvatar.label}</span>
+        <span>${selectedTemplate.title} · ${selectedAvatar.label}</span>
         <button type="button" data-generate-asset>Generate</button>
       </div>
     </section>
@@ -796,6 +913,10 @@ function bindProductInteractions() {
     window.location.hash = "#/select";
   });
 
+  app.querySelector("[data-promote-open]")?.addEventListener("click", () => {
+    openPromoteSheet(currentProductFromRoute());
+  });
+
   const thumbs = app.querySelectorAll(".thumb");
   const productImage = app.querySelector(".product-image");
   const imageCount = app.querySelector(".image-count");
@@ -814,7 +935,7 @@ function bindProductInteractions() {
       group.querySelectorAll("button").forEach((item) => item.classList.toggle("is-active", item === button));
       group.querySelectorAll(".commission-option").forEach((item) => item.classList.toggle("is-active", item === button));
       if (button.classList.contains("commission-option") && button.querySelector("[data-extra-create-toggle]")) {
-        openCreateFab();
+        openCreateContentSheet(currentProductFromRoute());
       }
     });
     button.addEventListener("keydown", (event) => {
@@ -831,7 +952,7 @@ function bindProductInteractions() {
     commissionOption?.parentElement.querySelectorAll(".commission-option").forEach((item) => {
       item.classList.toggle("is-active", item === commissionOption);
     });
-    openCreateFab();
+    openCreateContentSheet(currentProductFromRoute());
   });
 
   app.querySelector("[data-view-creator-more]")?.addEventListener("click", (event) => {
@@ -847,23 +968,9 @@ function bindProductInteractions() {
     });
   });
 
-  app.querySelectorAll("[data-download-asset]").forEach((button) => {
+  app.querySelectorAll("[data-asset-filter]").forEach((button) => {
     button.addEventListener("click", () => {
-      button.textContent = "Downloaded";
-      button.classList.add("is-done");
-    });
-  });
-
-  app.querySelectorAll("[data-asset-feature-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      productAssetFeatureFilter = productAssetFeatureFilter === button.dataset.assetFeatureFilter ? "" : button.dataset.assetFeatureFilter;
-      rerenderCurrentProduct();
-    });
-  });
-
-  app.querySelectorAll("[data-asset-type-filter]").forEach((button) => {
-    button.addEventListener("click", () => {
-      productAssetTypeFilter = productAssetTypeFilter === button.dataset.assetTypeFilter ? "" : button.dataset.assetTypeFilter;
+      productAssetFilter = button.dataset.assetFilter;
       rerenderCurrentProduct();
     });
   });
@@ -899,9 +1006,9 @@ function bindProductInteractions() {
     });
   });
 
-  app.querySelectorAll("[data-format]").forEach((button) => {
+  app.querySelectorAll("[data-template]").forEach((button) => {
     button.addEventListener("click", () => {
-      productAssetSelectedFormat = button.dataset.format;
+      productAssetSelectedTemplate = button.dataset.template;
       rerenderCurrentProduct();
     });
   });
@@ -922,20 +1029,22 @@ function bindProductInteractions() {
 
   app.querySelector("[data-generate-asset]")?.addEventListener("click", () => {
     const product = currentProductFromRoute();
-    const format = productAssetFormats.find((item) => item.id === productAssetSelectedFormat) || productAssetFormats[0];
+    const template = productAssetTemplates.find((item) => item.id === productAssetSelectedTemplate) || productAssetTemplates[0];
     if (!productAssetsByProduct[product.id]) productAssetsByProduct[product.id] = getProductAssets(product);
     productAssetsByProduct[product.id].unshift({
       id: `loading-${Date.now()}`,
-      kind: format.output.startsWith("Video") ? "Video" : "Image",
+      title: template.title,
+      kind: template.output.startsWith("Video") ? "Video" : "Image",
       source: "Generated",
-      ownerUserId: currentUserId,
-      image: format.image,
+      duration: template.output.includes("5s") ? "05s" : "",
+      image: template.image,
+      photos: template.output.startsWith("Video") ? undefined : [template.image, product.images[0], product.images[1] || product.image],
       status: "loading",
-      formatId: format.id,
-      createdAt: Date.now(),
-      featureTags: ["try-on"]
+      templateId: template.id,
+      createdAt: Date.now()
     });
     productAssetPanelOpen = false;
+    productAssetFilter = template.output.startsWith("Video") ? "video" : "image";
     rerenderCurrentProduct();
   });
 
@@ -967,13 +1076,395 @@ function bindProductInteractions() {
     });
   });
 
+  app.querySelectorAll("[data-open-product-asset]").forEach((card) => {
+    const open = () => {
+      const [productId, assetId] = card.dataset.openProductAsset.split(":");
+      openProductAssetPreview(productId, assetId);
+    };
+    card.addEventListener("click", open);
+    card.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      open();
+    });
+  });
+
   bindCreateFab();
+}
+
+function openProductAssetPreview(productId, assetId) {
+  const { product, asset } = getProductAssetById(productId, assetId);
+  if (!asset) return;
+  productAssetPreview = { productId: product.id, assetId: asset.id };
+  productAssetPreviewPhotoIndex = 0;
+  renderProductAssetPreview(product, asset);
+}
+
+function renderProductAssetPreview(product, asset) {
+  document.querySelector("[data-asset-preview-layer]")?.remove();
+  const photos = getAssetPhotos(asset, product);
+  const currentPhoto = photos[productAssetPreviewPhotoIndex] || photos[0] || asset.image;
+  const isVideo = asset.kind === "Video";
+  const layer = document.createElement("div");
+  layer.className = "asset-preview-layer";
+  layer.dataset.assetPreviewLayer = "";
+  layer.innerHTML = `
+    <section class="asset-preview-screen" aria-label="Content preview">
+      <button class="asset-preview-close" type="button" data-close-asset-preview aria-label="Close">×</button>
+      <div class="asset-preview-stage ${isVideo ? "is-video" : "is-image"}">
+        ${isVideo ? `
+          <img src="${currentPhoto}" alt="">
+          <span class="asset-preview-play">▶</span>
+          <span class="asset-preview-duration">${formatAssetDuration(asset.duration)}</span>
+        ` : `
+          <div class="asset-stacked-gallery" data-preview-stack>
+            ${photos.map((photo, index) => {
+              const stackIndex = (index - productAssetPreviewPhotoIndex + photos.length) % photos.length;
+              return `
+                <figure class="asset-stack-card stack-${Math.min(stackIndex, 3)}" aria-hidden="${stackIndex !== 0}">
+                  <img draggable="false" src="${photo}" alt="${asset.title} image ${index + 1}">
+                  ${stackIndex === 0 ? `<figcaption>${productAssetPreviewPhotoIndex + 1} / ${photos.length}</figcaption>` : ""}
+                </figure>
+              `;
+            }).join("")}
+            <span class="asset-swipe-hint">Swipe</span>
+          </div>
+          <div class="asset-gallery-dots" aria-label="Image ${productAssetPreviewPhotoIndex + 1} of ${photos.length}">
+            ${photos.map((photo, index) => `
+              <button type="button" class="${index === productAssetPreviewPhotoIndex ? "active" : ""}" data-preview-dot="${index}" aria-label="View image ${index + 1}"></button>
+            `).join("")}
+          </div>
+        `}
+      </div>
+      <footer class="asset-preview-footer">
+        <strong>${asset.title}</strong>
+        <button type="button" data-want-product-asset>I want this content</button>
+      </footer>
+    </section>
+  `;
+  document.body.appendChild(layer);
+
+  const close = () => {
+    productAssetPreview = null;
+    layer.remove();
+  };
+  layer.querySelector("[data-close-asset-preview]")?.addEventListener("click", close);
+  layer.querySelector("[data-preview-prev]")?.addEventListener("click", () => {
+    productAssetPreviewPhotoIndex = (productAssetPreviewPhotoIndex - 1 + photos.length) % photos.length;
+    renderProductAssetPreview(product, asset);
+  });
+  layer.querySelector("[data-preview-next]")?.addEventListener("click", () => {
+    productAssetPreviewPhotoIndex = (productAssetPreviewPhotoIndex + 1) % photos.length;
+    renderProductAssetPreview(product, asset);
+  });
+  layer.querySelector("[data-preview-stack]")?.addEventListener("pointerdown", (event) => {
+    event.currentTarget.dataset.startX = String(event.clientX);
+  });
+  layer.querySelector("[data-preview-stack]")?.addEventListener("pointerup", (event) => {
+    const startX = Number(event.currentTarget.dataset.startX || event.clientX);
+    const delta = event.clientX - startX;
+    if (Math.abs(delta) < 45 || photos.length < 2) return;
+    productAssetPreviewPhotoIndex = (productAssetPreviewPhotoIndex + (delta < 0 ? 1 : -1) + photos.length) % photos.length;
+    renderProductAssetPreview(product, asset);
+  });
+  layer.querySelector("[data-preview-stack]")?.addEventListener("pointercancel", (event) => {
+    event.currentTarget.dataset.startX = "";
+  });
+  layer.querySelectorAll("[data-preview-dot]").forEach((button) => {
+    button.addEventListener("click", () => {
+      productAssetPreviewPhotoIndex = Number(button.dataset.previewDot) || 0;
+      renderProductAssetPreview(product, asset);
+    });
+  });
+  layer.querySelector("[data-want-product-asset]")?.addEventListener("click", () => {
+    layer.remove();
+    contentDownloadPlatforms = [];
+    window.location.hash = `#/content-download/${product.id}/${asset.id}`;
+  });
+}
+
+function openPromoteSheet(product) {
+  const existingSheet = document.querySelector("[data-promote-sheet-layer]");
+  existingSheet?.remove();
+
+  const link = `https://museselect.com/product/${product.id}?affiliate=demo`;
+  const layer = document.createElement("div");
+  layer.className = "promote-sheet-layer";
+  layer.dataset.promoteSheetLayer = "";
+  layer.innerHTML = `
+    <section class="promote-sheet" role="dialog" aria-modal="true" aria-label="Promote product">
+      <div class="promote-sheet-handle"></div>
+      <div class="promote-sheet-head">
+        <strong>Promote</strong>
+        <button type="button" aria-label="Close promote sheet" data-promote-close>×</button>
+      </div>
+
+      <article class="promote-product-summary">
+        <img src="${product.image}" alt="">
+        <div>
+          <span>${product.category}</span>
+          <h2>${product.title}</h2>
+          <p>${product.price} · Commission ${product.commission}</p>
+        </div>
+      </article>
+
+      <section class="promote-link-block">
+        <div class="promote-row-title">
+          <strong>Affiliate Link</strong>
+          <span>Earn 15%</span>
+        </div>
+        <div class="promote-link-copy">
+          <code>${link}</code>
+          <button class="promote-action-button is-primary" type="button" data-promote-copy>COPY LINK</button>
+        </div>
+      </section>
+
+      <section class="promote-create-block">
+        <div class="promote-row-title">
+          <strong>Make Content For Me</strong>
+          <span>Earn 20%</span>
+        </div>
+        <div class="promote-create-action">
+          <p>No sample waiting, Earn extra 5% per order</p>
+          <button class="promote-action-button is-secondary" type="button" data-promote-create>Make Content For Me</button>
+        </div>
+      </section>
+    </section>
+  `;
+
+  document.body.appendChild(layer);
+
+  const close = () => layer.remove();
+  layer.addEventListener("click", (event) => {
+    if (event.target === layer) close();
+  });
+  layer.querySelector("[data-promote-close]")?.addEventListener("click", close);
+  layer.querySelector("[data-promote-copy]")?.addEventListener("click", async (event) => {
+    try {
+      await navigator.clipboard?.writeText(link);
+      event.currentTarget.textContent = "COPIED";
+      window.setTimeout(() => {
+        if (document.body.contains(layer)) event.currentTarget.textContent = "COPY LINK";
+      }, 1200);
+    } catch {
+      event.currentTarget.textContent = "COPY FAILED";
+    }
+  });
+  layer.querySelector("[data-promote-create]")?.addEventListener("click", () => {
+    close();
+    openCreateContentSheet(product);
+  });
+}
+
+function openCreateContentSheet(product) {
+  const existingSheet = document.querySelector("[data-create-content-sheet-layer]");
+  existingSheet?.remove();
+
+  const layer = document.createElement("div");
+  layer.className = "promote-sheet-layer create-content-sheet-layer";
+  layer.dataset.createContentSheetLayer = "";
+  layer.innerHTML = `
+    <section class="promote-sheet create-content-sheet" role="dialog" aria-modal="true" aria-label="Make Content For Me">
+      <div class="promote-sheet-handle"></div>
+      <div class="promote-sheet-head">
+        <strong>Make Content For Me</strong>
+        <button type="button" aria-label="Close create content sheet" data-create-content-close>×</button>
+      </div>
+
+      <button class="content-choice-card is-recommended" type="button" data-make-shoppable-video>
+        <span class="content-choice-tag">Recommended</span>
+        <strong>Make Shoppable Video For Me</strong>
+        <div class="content-platforms">
+          <span>TK</span>
+          <span>IG REELS</span>
+          <span>YOUTUBE SHOTS</span>
+        </div>
+        <p>No sample waiting. Muse creates a short selling video for you.</p>
+        <em>Start Now</em>
+      </button>
+
+      <button class="content-choice-card" type="button" data-make-image-post>
+        <strong>Make Image Post For Me</strong>
+        <div class="content-platforms">
+          <span>IG STORY</span>
+          <span>IG POST</span>
+          <span>PINTEREST</span>
+          <span>TK</span>
+        </div>
+        <p>Create image-ready content for social promotion.</p>
+        <em>Start Now</em>
+      </button>
+    </section>
+  `;
+
+  document.body.appendChild(layer);
+
+  const close = () => layer.remove();
+  layer.addEventListener("click", (event) => {
+    if (event.target === layer) close();
+  });
+  layer.querySelector("[data-create-content-close]")?.addEventListener("click", close);
+  layer.querySelector("[data-make-shoppable-video]")?.addEventListener("click", () => {
+    close();
+    window.location.hash = `#/muse-brief/${product.id}/1`;
+  });
 }
 
 function currentProductFromRoute() {
   const [, page, id] = (window.location.hash || "").split("/");
   if (page === "product") return products.find((product) => product.id === id) || products[0];
   return products[0];
+}
+
+function renderContentDownloadPage(productId, assetId) {
+  const { product, asset } = getProductAssetById(productId, assetId);
+  if (!asset) {
+    renderProduct(productId || products[0].id);
+    return;
+  }
+  const photos = getAssetPhotos(asset, product);
+  const selectedPreview = photos[0] || asset.image;
+  const selectedPlatforms = new Set(contentDownloadPlatforms);
+  app.innerHTML = `
+    <header class="mobile-header">
+      <button type="button" aria-label="Back" data-back-product-content>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18L9 12L15 6"/></svg>
+      </button>
+      <span>Download Content</span>
+      <button type="button" aria-label="Close" data-back-product-content>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6L18 18M18 6L6 18"/></svg>
+      </button>
+    </header>
+
+    <section class="content-download-page" aria-label="Download content">
+      <section class="download-confirm-intro">
+        <h1>Download Content</h1>
+        <p>Review your selected content and choose where you will post.</p>
+        <div class="download-limit-note">
+          <span aria-hidden="true">i</span>
+          <p>One ready-to-post download per product. Mark it as posted to download new content.</p>
+        </div>
+      </section>
+
+      <section class="download-confirm-block">
+        <h2>1. Selected content</h2>
+        <article class="download-selected-material">
+          <button type="button" class="download-material-thumb" data-preview-selected-content aria-label="Preview selected content">
+            <img src="${selectedPreview}" alt="${asset.title}">
+            ${asset.kind === "Video" ? `<span class="download-material-play">▶</span>` : `<span class="download-material-count">1/${photos.length}</span>`}
+          </button>
+          <div>
+            <strong>${asset.title}</strong>
+            <span>${product.title}</span>
+            <small>${asset.kind === "Video" ? `${formatAssetDuration(asset.duration)} · Video content` : `${photos.length} photos · Image content`}</small>
+          </div>
+          <span class="download-selected-check">✓</span>
+        </article>
+        ${asset.kind === "Image" && photos.length > 1 ? `
+          <div class="download-material-dots" aria-label="${photos.length} selected images">
+            ${photos.map((photo, index) => `<i class="${index === 0 ? "active" : ""}"></i>`).join("")}
+          </div>
+        ` : ""}
+      </section>
+
+      <section class="download-confirm-block">
+        <h2>2. Which platform you will post</h2>
+        <div class="platform-choice-grid" aria-label="Post platforms">
+          ${["TikTok", "Instagram", "YouTube"].map((platform) => `
+            <button class="${selectedPlatforms.has(platform) ? "is-selected" : ""}" type="button" data-toggle-download-platform="${platform}" aria-pressed="${selectedPlatforms.has(platform)}">
+              ${platform}
+            </button>
+          `).join("")}
+        </div>
+        <div class="download-earn-hint">
+          <span aria-hidden="true">%</span>
+          <p>Earn +5% per order after posting this content.</p>
+        </div>
+      </section>
+
+      <section class="download-submit-panel" aria-label="Download action">
+        <p>Download the selected content, then post it on your selected platform.</p>
+        <button type="button" data-download-to-post ${contentDownloadPlatforms.length ? "" : "disabled"}>
+          <span>Download to Post</span>
+        </button>
+      </section>
+    </section>
+  `;
+
+  app.querySelectorAll("[data-back-product-content]").forEach((button) => {
+    button.addEventListener("click", () => {
+      contentDownloadPlatforms = [];
+      window.location.hash = `#/product/${product.id}`;
+    });
+  });
+  app.querySelectorAll("[data-toggle-download-platform]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const platform = button.dataset.toggleDownloadPlatform;
+      contentDownloadPlatforms = contentDownloadPlatforms.includes(platform)
+        ? contentDownloadPlatforms.filter((item) => item !== platform)
+        : [...contentDownloadPlatforms, platform];
+      renderContentDownloadPage(product.id, asset.id);
+    });
+  });
+  app.querySelector("[data-preview-selected-content]")?.addEventListener("click", () => {
+    openProductAssetPreview(product.id, asset.id);
+  });
+  app.querySelector("[data-download-to-post]")?.addEventListener("click", (event) => {
+    if (!contentDownloadPlatforms.length) return;
+    const button = event.currentTarget;
+    button.disabled = true;
+    button.classList.add("is-loading");
+    button.querySelector("span").textContent = "Downloading...";
+    const contentId = addProductAssetToMyContent(product.id, asset.id);
+    window.setTimeout(() => {
+      button.classList.remove("is-loading");
+      button.classList.add("is-done");
+      button.querySelector("span").textContent = "Downloaded";
+      showDownloadCompleteModal(product, asset, contentId);
+    }, 1000);
+  });
+}
+
+function showDownloadCompleteModal(product, asset, contentId) {
+  document.querySelector("[data-download-complete-layer]")?.remove();
+  const layer = document.createElement("div");
+  layer.className = "download-complete-layer";
+  layer.dataset.downloadCompleteLayer = "";
+  layer.innerHTML = `
+    <section class="download-complete-modal" role="dialog" aria-modal="true" aria-label="Download complete">
+      <div class="download-complete-title">
+        <span class="download-complete-icon">✓</span>
+        <h2>Downloaded to album</h2>
+      </div>
+      <p>You can post it now and earn +5% commission per order.</p>
+      <article class="download-complete-content">
+        <img src="${asset.image}" alt="">
+        <div>
+          <strong>${asset.title}</strong>
+          <span>${product.title}</span>
+        </div>
+      </article>
+      <footer>
+        <button class="secondary" type="button" data-complete-view-content>View My Content</button>
+        <button class="primary" type="button" data-complete-back-product>Back to Product Details</button>
+      </footer>
+    </section>
+  `;
+  document.body.appendChild(layer);
+
+  layer.querySelector("[data-complete-back-product]")?.addEventListener("click", () => {
+    layer.remove();
+    contentDownloadPlatforms = [];
+    window.location.hash = `#/product/${product.id}`;
+  });
+  layer.querySelector("[data-complete-view-content]")?.addEventListener("click", () => {
+    layer.remove();
+    myContentFocusedId = contentId || getContentAssetId(product, asset);
+    myContentProductQuery = "";
+    myContentSelectedProductTitles = [product.title];
+    myContentAppliedProductTitles = [product.title];
+    window.location.hash = `#/my-content/ready/${getContentTypeForAsset(asset)}`;
+  });
 }
 
 function rerenderCurrentProduct() {
@@ -990,6 +1481,84 @@ function removeProductAsset(assetId) {
   const product = currentProductFromRoute();
   const assets = productAssetsByProduct[product.id] || [];
   productAssetsByProduct[product.id] = assets.filter((asset) => asset.id !== assetId);
+}
+
+function getContentAssetId(product, asset) {
+  return `asset-${product.id}-${asset.id}`;
+}
+
+function getContentTypeForAsset(asset) {
+  return asset.kind === "Video" ? "video" : "image";
+}
+
+function getContentTypeLabelForAsset(asset) {
+  return asset.kind === "Video" ? "Video" : "Image Post";
+}
+
+function normalizeContentItemType(item) {
+  if (item.type === "asset") return item.assetKind === "Video" ? "video" : "image";
+  return item.type;
+}
+
+function toggleProductAssetInMyContent(productId, assetId) {
+  const product = products.find((item) => item.id === productId) || currentProductFromRoute();
+  const asset = getProductAssets(product).find((item) => item.id === assetId);
+  if (!asset) return false;
+  const contentId = getContentAssetId(product, asset);
+  if (addedProductAssetIds.has(contentId) || myContentItems.some((item) => item.id === contentId)) {
+    addedProductAssetIds.delete(contentId);
+    myContentItems = myContentItems.filter((item) => item.id !== contentId);
+    return false;
+  }
+  addedProductAssetIds.add(contentId);
+  myContentItems.unshift({
+    id: contentId,
+    title: asset.title,
+    status: "ready",
+    type: getContentTypeForAsset(asset),
+    contentTypeLabel: getContentTypeLabelForAsset(asset),
+    assetKind: asset.kind,
+    createdAt: new Date().toISOString().slice(0, 10),
+    media: asset.kind === "Image" ? getAssetPhotos(asset, product) : [asset.image],
+    products: [{ title: product.title, image: product.image }],
+    postedLinks: {}
+  });
+  return true;
+}
+
+function addProductAssetToMyContent(productId, assetId) {
+  const product = products.find((item) => item.id === productId) || currentProductFromRoute();
+  const asset = getProductAssets(product).find((item) => item.id === assetId);
+  if (!asset) return "";
+  const contentId = getContentAssetId(product, asset);
+  if (addedProductAssetIds.has(contentId) || myContentItems.some((item) => item.id === contentId)) return contentId;
+  addedProductAssetIds.add(contentId);
+  myContentItems.unshift({
+    id: contentId,
+    title: asset.title,
+    status: "ready",
+    type: getContentTypeForAsset(asset),
+    contentTypeLabel: getContentTypeLabelForAsset(asset),
+    assetKind: asset.kind,
+    createdAt: new Date().toISOString().slice(0, 10),
+    media: asset.kind === "Image" ? getAssetPhotos(asset, product) : [asset.image],
+    products: [{ title: product.title, image: product.image }],
+    postedLinks: {}
+  });
+  return contentId;
+}
+
+function showToast(message) {
+  document.querySelector("[data-toast]")?.remove();
+  const toast = document.createElement("div");
+  toast.className = "app-toast";
+  toast.dataset.toast = "";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  window.setTimeout(() => {
+    toast.classList.add("is-hiding");
+    window.setTimeout(() => toast.remove(), 220);
+  }, 1800);
 }
 
 function bindCreateFab() {
@@ -1040,19 +1609,13 @@ function bindCreateFab() {
   toggle.addEventListener("pointerup", (event) => {
     dragging = false;
     toggle.releasePointerCapture(event.pointerId);
-    if (!moved && document.body.dataset.view === "mobile") {
-      const isOpen = fab.classList.toggle("is-open");
-      toggle.setAttribute("aria-expanded", String(isOpen));
-      if (isOpen) {
-        window.setTimeout(() => {
-          document.addEventListener("click", closeCreateFabOnOutside, { once: true });
-        }, 0);
-      }
+    if (!moved) {
+      openCreateContentSheet(currentProductFromRoute());
     }
   });
 
   toggle.addEventListener("click", (event) => {
-    if (document.body.dataset.view !== "mobile") event.preventDefault();
+    event.preventDefault();
   });
 
   app.querySelectorAll("[data-create-action]").forEach((button) => {
@@ -1100,6 +1663,9 @@ function bindGlobalCreateMenu() {
 
   function openMenu(lock = false) {
     lockedOpen = lock || lockedOpen;
+    const rect = globalCreateTrigger.getBoundingClientRect();
+    globalCreateMenu.style.setProperty("--create-menu-left", `${rect.left + rect.width / 2}px`);
+    globalCreateMenu.style.setProperty("--create-menu-top", `${rect.bottom + 8}px`);
     globalCreateMenu.hidden = false;
     globalCreateTrigger.classList.add("is-active");
     globalCreateTrigger.setAttribute("aria-expanded", "true");
@@ -1113,7 +1679,13 @@ function bindGlobalCreateMenu() {
   }
 
   globalCreateTrigger.addEventListener("click", (event) => {
+    event.preventDefault();
     event.stopPropagation();
+    if (document.body.dataset.view !== "web") {
+      closeMenu();
+      openCreateContentSheet(currentProductFromRoute());
+      return;
+    }
     if (!globalCreateMenu.hidden && lockedOpen) {
       closeMenu();
       return;
@@ -1500,7 +2072,7 @@ function renderMuseNext(id) {
     window.location.hash = `#/muse-brief/${product.id}/1`;
   });
   app.querySelector("[data-go-mine]")?.addEventListener("click", () => {
-    window.location.hash = "#/my-content/Requests";
+    window.location.hash = "#/my-content/making/all";
   });
 }
 
@@ -1782,7 +2354,7 @@ function renderMine() {
         <section class="mine-menu-group">
           <h2>Promote</h2>
           <button type="button">My Picks <span>82</span></button>
-          <button type="button" data-open-my-content>My Content <span>${15 + museRequests.length}</span></button>
+          <button type="button" data-open-my-content>My Content <span>${getContentCount("all")}</span></button>
         </section>
 
         <section class="mine-menu-group">
@@ -1800,21 +2372,37 @@ function renderMine() {
   `;
 
   app.querySelector("[data-open-my-content]")?.addEventListener("click", () => {
-    window.location.hash = "#/my-content/All";
+    window.location.hash = "#/my-content/all/all";
   });
 }
 
-function normalizeContentTab(tab) {
-  const match = contentTabs.find((item) => item.toLowerCase() === String(tab || "").toLowerCase());
-  return match || "All";
+function normalizeContentFilter(value, tabs, fallback = tabs[0].id) {
+  return tabs.some((tab) => tab.id === value) ? value : fallback;
 }
 
-function renderMyContent(tabName = "All") {
-  const activeTab = normalizeContentTab(tabName);
-  const postsToShow = activeTab === "All" || activeTab === "Posts" ? postBatches : [];
-  const videosToShow = activeTab === "All" || activeTab === "Videos" ? videoBatches : [];
-  const requestsToShow = activeTab === "All" || activeTab === "Requests" ? museRequests : [];
-  const hasContent = postsToShow.length || videosToShow.length || requestsToShow.length;
+function getContentCount(status, type = "all") {
+  return myContentItems.filter((item) => {
+    const statusMatch = status === "all" || item.status === status;
+    const typeMatch = type === "all" || normalizeContentItemType(item) === type;
+    return statusMatch && typeMatch;
+  }).length;
+}
+
+function renderMyContent(statusName = "all", typeName = "all") {
+  const activeStatus = normalizeContentFilter(statusName, contentStatusTabs);
+  const activeType = normalizeContentFilter(typeName, contentTypeTabs, typeName === "all" ? "image" : contentTypeTabs[0].id);
+  const selectedProductSet = new Set(myContentSelectedProductTitles);
+  const appliedProductSet = new Set(myContentAppliedProductTitles);
+  const filteredItems = myContentItems.filter((item) => {
+    const statusMatch = activeStatus === "all" || item.status === activeStatus;
+    const typeMatch = activeType === "all" || normalizeContentItemType(item) === activeType;
+    const focusMatch = !myContentFocusedId || item.id === myContentFocusedId;
+    const productMatch =
+      appliedProductSet.size === 0 ||
+      item.products.some((product) => appliedProductSet.has(product.title));
+    return statusMatch && typeMatch && productMatch && focusMatch;
+  });
+  const productResults = getMyContentProductResults();
 
   app.innerHTML = `
     <section class="my-content-page" aria-label="My Content">
@@ -1829,18 +2417,61 @@ function renderMyContent(tabName = "All") {
         </div>
       </header>
 
-      <nav class="my-content-tabs" aria-label="Content type">
-        ${contentTabs.map((tab) => `
-          <button class="${tab === activeTab ? "is-active" : ""}" type="button" data-content-tab="${tab}">${tab}</button>
-        `).join("")}
-      </nav>
+      <section class="my-content-product-search" aria-label="Search content by product">
+        <label>
+          <span>Search products</span>
+          <div class="content-search-control">
+            <input type="search" value="${escapeHtml(myContentProductQuery)}" placeholder="Search by product name" data-content-product-search>
+            <button type="button" data-run-content-product-search ${myContentSelectedProductTitles.length ? "" : "disabled"}>Search</button>
+          </div>
+        </label>
+        ${myContentSelectedProductTitles.length ? `
+          <div class="content-selected-products" aria-label="Selected products">
+            ${myContentSelectedProductTitles.map((title) => {
+              const product = getContentSearchProducts().find((item) => item.title === title);
+              return `
+                <button type="button" data-remove-content-product="${escapeAttribute(title)}">
+                  <img src="${product?.image || "./assets/product-1.jpg"}" alt="">
+                  <span>${title}</span>
+                  <b aria-hidden="true">×</b>
+                </button>
+              `;
+            }).join("")}
+          </div>
+        ` : ""}
+        ${myContentProductQuery ? `
+          <div class="content-product-results">
+            ${productResults.length ? productResults.map((product) => `
+              <button class="${selectedProductSet.has(product.title) ? "is-selected" : ""}" type="button" data-toggle-content-product="${escapeAttribute(product.title)}">
+                <img src="${product.image}" alt="">
+                <span>${product.title}</span>
+              </button>
+            `).join("") : `<p>No products found</p>`}
+          </div>
+        ` : ""}
+      </section>
 
-      <section class="my-content-list" aria-label="Content list">
-        ${postsToShow.map(renderPostBatch).join("")}
-        ${videosToShow.map(renderVideoBatch).join("")}
-        ${requestsToShow.map(renderRequestBatch).join("")}
-        ${activeTab === "Requests" ? renderNewRequestCard() : ""}
-        ${!hasContent && activeTab !== "Requests" ? `<p class="my-content-empty">No content yet.</p>` : ""}
+      <div class="my-content-filterbar">
+        <nav class="my-content-tabs my-content-status-tabs" aria-label="Content status">
+          ${contentStatusTabs.map((tab) => `
+            <button class="${tab.id === activeStatus ? "is-active" : ""}" type="button" data-content-status="${tab.id}">
+              ${tab.label}<span>${getContentCount(tab.id)}</span>
+            </button>
+          `).join("")}
+        </nav>
+
+        <nav class="my-content-tabs my-content-type-tabs" aria-label="Content type">
+          ${contentTypeTabs.map((tab) => `
+            <button class="${tab.id === activeType ? "is-active" : ""}" type="button" data-content-type="${tab.id}">
+              ${tab.label}<span>${getContentCount("all", tab.id)}</span>
+            </button>
+          `).join("")}
+        </nav>
+      </div>
+
+      <section class="my-content-grid" aria-label="Content list">
+        ${filteredItems.map(renderMyContentCard).join("")}
+        ${filteredItems.length === 0 ? `<p class="my-content-empty">${myContentAppliedProductTitles.length ? "No content for selected products." : "No content yet."}</p>` : ""}
       </section>
     </section>
   `;
@@ -1849,132 +2480,410 @@ function renderMyContent(tabName = "All") {
     window.location.hash = "#/mine";
   });
 
-  app.querySelectorAll("[data-content-tab]").forEach((button) => {
+  app.querySelectorAll("[data-content-status]").forEach((button) => {
     button.addEventListener("click", () => {
-      window.location.hash = `#/my-content/${button.dataset.contentTab}`;
+      myContentFocusedId = "";
+      window.location.hash = `#/my-content/${button.dataset.contentStatus}/${activeType}`;
     });
   });
 
-  app.querySelectorAll("[data-publish-content]").forEach((button) => {
+  app.querySelectorAll("[data-content-type]").forEach((button) => {
     button.addEventListener("click", () => {
-      button.textContent = "Published";
-      button.classList.add("is-done");
+      myContentFocusedId = "";
+      window.location.hash = `#/my-content/${activeStatus}/${button.dataset.contentType}`;
     });
   });
 
-  app.querySelector("[data-new-muse-request]")?.addEventListener("click", () => {
-    window.location.hash = "#/muse-brief/fringe-dress/1";
+  app.querySelector("[data-content-product-search]")?.addEventListener("input", (event) => {
+    myContentFocusedId = "";
+    myContentProductQuery = event.target.value;
+    renderMyContent(activeStatus, activeType);
+    window.setTimeout(() => {
+      const input = app.querySelector("[data-content-product-search]");
+      input?.focus();
+      input?.setSelectionRange(input.value.length, input.value.length);
+    }, 0);
   });
 
-  app.querySelectorAll("[data-open-request]").forEach((button) => {
+  app.querySelectorAll("[data-toggle-content-product]").forEach((button) => {
     button.addEventListener("click", () => {
-      window.location.hash = "#/muse-next/fringe-dress";
+      myContentFocusedId = "";
+      toggleMyContentProduct(button.dataset.toggleContentProduct);
+      renderMyContent(activeStatus, activeType);
     });
   });
+
+  app.querySelector("[data-run-content-product-search]")?.addEventListener("click", () => {
+    if (!myContentSelectedProductTitles.length) return;
+    myContentFocusedId = "";
+    myContentAppliedProductTitles = [...myContentSelectedProductTitles];
+    myContentProductQuery = "";
+    renderMyContent(activeStatus, activeType);
+  });
+
+  app.querySelectorAll("[data-remove-content-product]").forEach((button) => {
+    button.addEventListener("click", () => {
+      myContentFocusedId = "";
+      myContentSelectedProductTitles = myContentSelectedProductTitles.filter((title) => title !== button.dataset.removeContentProduct);
+      myContentAppliedProductTitles = myContentAppliedProductTitles.filter((title) => title !== button.dataset.removeContentProduct);
+      renderMyContent(activeStatus, activeType);
+    });
+  });
+
+  app.querySelectorAll("[data-download-content]").forEach((button) => {
+    button.addEventListener("click", () => {
+      button.textContent = "Downloaded";
+      window.setTimeout(() => {
+        button.textContent = "Download";
+      }, 1200);
+    });
+  });
+
+  app.querySelectorAll("[data-mark-posted]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openMarkPostedModal(button.dataset.markPosted, activeStatus, activeType);
+    });
+  });
+
+  app.querySelectorAll("[data-toggle-making-contact]").forEach((button) => {
+    button.addEventListener("click", () => openMakingContactSheet());
+  });
+
+  app.querySelectorAll("[data-discard-content]").forEach((button) => {
+    button.addEventListener("click", () => {
+      openDiscardContentModal(button.dataset.discardContent, activeStatus, activeType);
+    });
+  });
+
+  app.querySelectorAll("[data-restore-content]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const item = myContentItems.find((content) => content.id === button.dataset.restoreContent);
+      if (!item) return;
+      item.status = "ready";
+      showToast("Restored to Ready to Post");
+      renderMyContent(activeStatus, activeType);
+    });
+  });
+
+  bindContentMediaPagination();
 }
 
-function renderPostBatch(batch) {
-  return `
-    <section class="my-content-batch">
-      <div class="my-content-labels">
-        <h2>Promote Product(s)</h2>
-        <h2>Posts <span>${batch.date}</span></h2>
-      </div>
-      <div class="my-content-row">
-        ${renderContentProduct(batch)}
-        <div class="my-content-gallery">
-          ${batch.previews.map((image) => `<img src="${image}" alt="">`).join("")}
-        </div>
-        ${renderPublishButton()}
-      </div>
-    </section>
-  `;
+function getContentSearchProducts() {
+  const byTitle = new Map();
+  products.forEach((product) => byTitle.set(product.title, { title: product.title, image: product.image }));
+  myContentItems.forEach((item) => {
+    item.products.forEach((product) => {
+      if (!byTitle.has(product.title)) byTitle.set(product.title, product);
+    });
+  });
+  return Array.from(byTitle.values());
 }
 
-function renderVideoBatch(batch) {
+function getMyContentProductResults() {
+  const query = myContentProductQuery.trim().toLowerCase();
+  if (!query) return [];
+  return getContentSearchProducts().filter((product) => product.title.toLowerCase().includes(query)).slice(0, 8);
+}
+
+function toggleMyContentProduct(title) {
+  if (myContentSelectedProductTitles.includes(title)) {
+    myContentSelectedProductTitles = myContentSelectedProductTitles.filter((item) => item !== title);
+    return;
+  }
+  myContentSelectedProductTitles = [...myContentSelectedProductTitles, title];
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function escapeAttribute(value) {
+  return escapeHtml(value).replaceAll("'", "&#39;");
+}
+
+function renderMyContentCard(item) {
+  const statusLabel = getContentStatusLabel(item.status);
+  const canDownload = item.status === "ready" || item.status === "posted";
+  const canMarkPosted = item.status === "ready" || item.status === "posted";
+  const displayType = normalizeContentItemType(item);
+  const isMaking = item.status === "making";
+  const isFailed = item.status === "failed";
+  const isDiscarded = item.status === "discarded";
   return `
-    <section class="my-content-batch">
-      <div class="my-content-labels">
-        <h2>Promote Product(s)</h2>
-        <h2>Videos <span>${batch.date}</span></h2>
-      </div>
-      <div class="my-content-row">
-        ${renderContentProduct(batch)}
-        <div class="my-content-gallery">
-          ${batch.previews.map((image) => `
-            <div class="my-content-video-thumb">
-              <img src="${image}" alt="">
-              <span aria-hidden="true">▶</span>
+    <article class="my-content-card">
+      <div class="content-media-wrap">
+        ${isMaking ? `
+          <div class="content-making-placeholder">
+            <span>Making</span>
+            <strong>Creating your content</strong>
+            <p>Video content may take 1-3 business days for better selling performance. We will notify you by email when it is ready.</p>
+            <div class="making-accelerate">
+              <b>Don’t want to wait too long?</b>
+              <small>Contact us to speed up production.</small>
+              <button type="button" data-toggle-making-contact="${item.id}">Contact Us</button>
             </div>
-          `).join("")}
-        </div>
-        ${renderPublishButton()}
-      </div>
-    </section>
-  `;
-}
-
-function renderRequestBatch(request) {
-  return `
-    <section class="my-content-batch my-content-request-batch">
-      <div class="my-content-labels">
-        <h2>Promote Product(s)</h2>
-        <h2>Requests <span>${formatContentDate(request.updatedAt)}</span></h2>
-      </div>
-      <div class="my-content-row">
-        ${renderContentProduct({
-          productImage: request.productImage,
-          productTitle: request.productTitle,
-          price: request.price
-        })}
-        <div class="my-content-gallery my-content-request-gallery">
-          <div class="my-content-loading-preview">
-            <span>In Production</span>
-            <i aria-hidden="true"></i>
-            <strong>Generating</strong>
-            <p>We are assigning a specialist to produce your request. This usually takes 1-3 business days.</p>
           </div>
-        </div>
-        <div class="my-content-request-action">
-          <span>In Production</span>
-          <button type="button" data-open-request="${request.id}">View Brief</button>
-        </div>
+        ` : isFailed ? `
+          <div class="content-failed-placeholder">
+            <span>Failed</span>
+            <strong>Content generation failed</strong>
+            <p>The source assets did not pass generation quality checks. Please re-make this content request.</p>
+          </div>
+        ` : `
+          <div class="content-media-scroll" aria-label="${item.title} media" data-media-scroll>
+            ${item.media.map((src) => `
+              <div class="content-media-frame">
+                <img src="${src}" alt="">
+                ${displayType === "video" ? `<span class="content-play" aria-hidden="true">▶</span>` : ""}
+              </div>
+            `).join("")}
+          </div>
+          ${item.media.length > 1 ? `
+            <button class="content-media-nav is-prev" type="button" data-media-prev aria-label="Previous image">‹</button>
+            <button class="content-media-nav is-next" type="button" data-media-next aria-label="Next image">›</button>
+          ` : ""}
+          ${item.media.length > 1 ? `<span class="content-count" data-content-count>1/${item.media.length}</span>` : ""}
+          ${displayType === "video" ? `<span class="content-video-badge">Video</span>` : ""}
+        `}
       </div>
-    </section>
-  `;
-}
 
-function renderNewRequestCard() {
-  return `
-    <button type="button" class="my-content-new-request" data-new-muse-request>
-      <span aria-hidden="true">+</span>
-      <strong>New Muse for Me</strong>
-      <p>Submit another custom content request.</p>
-    </button>
-  `;
-}
+      <h2>${item.title}</h2>
 
-function renderContentProduct(batch) {
-  return `
-    <article class="my-content-product">
-      ${batch.productImage ? `<img src="${batch.productImage}" alt="">` : `<div class="my-content-product-placeholder"></div>`}
-      ${batch.productTitle ? `
-        <div>
-          <strong>${batch.productTitle}</strong>
-          <span>${batch.price}</span>
-        </div>
-      ` : ""}
+      <div class="content-meta-stack">
+        <span class="content-status is-${item.status}">${statusLabel}</span>
+        <span>${displayType === "video" ? "Video" : item.contentTypeLabel || "Image Post"}</span>
+        <span>Created ${formatContentShortDate(item.createdAt)}</span>
+      </div>
+
+      <div class="content-products" aria-label="Products">
+        ${item.products.map((product) => `
+          <article>
+            <img src="${product.image}" alt="">
+            <span>${product.title}</span>
+          </article>
+        `).join("")}
+      </div>
+
+      <div class="content-card-actions">
+        ${isDiscarded ? `
+          <button class="content-mark-posted" type="button" data-restore-content="${item.id}">Restore</button>
+        ` : `
+          ${isFailed ? "" : `<button class="content-download" type="button" data-download-content="${item.id}" ${canDownload ? "" : "disabled"}>Download</button>`}
+          <button class="content-mark-posted ${item.status === "failed" ? "is-remake" : ""}" type="button" data-mark-posted="${item.id}" ${canMarkPosted ? "" : "disabled"}>
+            ${item.status === "failed" ? "Re-make" : item.status === "posted" ? "Add Post" : "Mark as Posted"}
+          </button>
+        `}
+      </div>
     </article>
   `;
 }
 
-function renderPublishButton() {
-  return `
-    <div class="my-content-publish">
-      <span>Extra 5% with AI Look</span>
-      <button type="button" data-publish-content>Publish</button>
-    </div>
+function bindContentMediaPagination() {
+  app.querySelectorAll("[data-media-scroll]").forEach((scroller) => {
+    const counter = scroller.parentElement?.querySelector("[data-content-count]");
+    if (!counter) return;
+    const total = scroller.children.length;
+    const update = () => {
+      const width = scroller.clientWidth || 1;
+      const index = Math.min(total, Math.max(1, Math.round(scroller.scrollLeft / width) + 1));
+      counter.textContent = `${index}/${total}`;
+    };
+    scroller.addEventListener("scroll", update, { passive: true });
+    const parent = scroller.parentElement;
+    parent?.querySelector("[data-media-prev]")?.addEventListener("click", () => {
+      scroller.scrollBy({ left: -scroller.clientWidth, behavior: "smooth" });
+    });
+    parent?.querySelector("[data-media-next]")?.addEventListener("click", () => {
+      scroller.scrollBy({ left: scroller.clientWidth, behavior: "smooth" });
+    });
+    update();
+  });
+}
+
+function getContentStatusLabel(status) {
+  const labels = {
+    ready: "Ready to Post",
+    making: "Making",
+    posted: "Posted",
+    failed: "Failed",
+    discarded: "Discarded"
+  };
+  return labels[status] || "Ready to Post";
+}
+
+function formatContentShortDate(value) {
+  const date = new Date(value);
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function openMakingContactSheet() {
+  document.querySelector("[data-making-contact-sheet-layer]")?.remove();
+
+  const email = "creator@museselect.com";
+  const layer = document.createElement("div");
+  layer.className = "making-contact-sheet-layer";
+  layer.dataset.makingContactSheetLayer = "";
+  layer.innerHTML = `
+    <section class="making-contact-sheet" role="dialog" aria-modal="true" aria-label="Contact us">
+      <div class="contact-sheet-handle"></div>
+      <header>
+        <div>
+          <strong>Contact Us</strong>
+          <p>Need it faster? Contact us to speed up production.</p>
+        </div>
+        <button type="button" data-close-making-contact aria-label="Close">×</button>
+      </header>
+      <a class="contact-sheet-whatsapp" href="https://wa.me/message/W5RFPY5BSTM5O1" target="_blank" rel="noopener">WhatsApp</a>
+      <div class="contact-sheet-email">
+        <div>
+          <span>Email</span>
+          <strong>${email}</strong>
+        </div>
+        <button type="button" data-copy-contact-email="${email}">Copy</button>
+      </div>
+    </section>
   `;
+
+  layer.addEventListener("click", (event) => {
+    if (event.target === layer || event.target.closest("[data-close-making-contact]")) {
+      layer.remove();
+    }
+  });
+
+  layer.querySelector("[data-copy-contact-email]")?.addEventListener("click", async (event) => {
+    const button = event.currentTarget;
+    try {
+      await navigator.clipboard?.writeText(button.dataset.copyContactEmail);
+    } catch (error) {
+      // Clipboard permissions vary in local demos; keep the UI response consistent.
+    }
+    button.textContent = "Copied";
+    window.setTimeout(() => {
+      button.textContent = "Copy";
+    }, 1200);
+  });
+
+  document.body.appendChild(layer);
+}
+
+function openMarkPostedModal(contentId, activeStatus, activeType) {
+  const item = myContentItems.find((content) => content.id === contentId);
+  if (!item) return;
+  document.querySelector("[data-mark-posted-layer]")?.remove();
+
+  const layer = document.createElement("div");
+  layer.className = "mark-posted-layer";
+  layer.dataset.markPostedLayer = "";
+  layer.innerHTML = `
+    <section class="mark-posted-modal" role="dialog" aria-modal="true" aria-label="Mark as Posted">
+      <header>
+        <div>
+          <span>Mark as Posted</span>
+          <h2>Add your posted links</h2>
+        </div>
+        <button type="button" aria-label="Close" data-close-mark-posted>×</button>
+      </header>
+      <p class="mark-posted-earn">Earn +5% commission per order.</p>
+      <label>
+        Instagram
+        <input type="url" data-posted-link="instagram" placeholder="Paste Instagram post, reel, or story link" value="${item.postedLinks.instagram || ""}">
+      </label>
+      <label>
+        TikTok
+        <input type="url" data-posted-link="tiktok" placeholder="Paste TikTok video link" value="${item.postedLinks.tiktok || ""}">
+      </label>
+      <label>
+        YouTube
+        <input type="url" data-posted-link="youtube" placeholder="Paste YouTube Shorts link" value="${item.postedLinks.youtube || ""}">
+      </label>
+      <footer>
+        <button type="button" data-close-mark-posted>Cancel</button>
+        <button type="button" data-save-mark-posted>Save</button>
+      </footer>
+    </section>
+  `;
+  document.body.appendChild(layer);
+
+  const close = () => layer.remove();
+  layer.addEventListener("click", (event) => {
+    if (event.target === layer) close();
+  });
+  layer.querySelectorAll("[data-close-mark-posted]").forEach((button) => {
+    button.addEventListener("click", close);
+  });
+  layer.querySelector("[data-save-mark-posted]")?.addEventListener("click", () => {
+    const links = {};
+    layer.querySelectorAll("[data-posted-link]").forEach((input) => {
+      links[input.dataset.postedLink] = input.value.trim();
+    });
+    item.postedLinks = links;
+    item.status = "posted";
+    close();
+    renderMyContent(activeStatus, activeType);
+  });
+}
+
+function openDiscardContentModal(contentId, activeStatus, activeType) {
+  const item = myContentItems.find((content) => content.id === contentId);
+  if (!item) return;
+  document.querySelector("[data-discard-content-layer]")?.remove();
+
+  const layer = document.createElement("div");
+  layer.className = "mark-posted-layer";
+  layer.dataset.discardContentLayer = "";
+  layer.innerHTML = `
+    <section class="mark-posted-modal discard-content-modal" role="dialog" aria-modal="true" aria-label="Discard content">
+      <header>
+        <div>
+          <h2>Move this content to Discarded?</h2>
+        </div>
+        <button type="button" aria-label="Close" data-close-discard-content>×</button>
+      </header>
+      <p>This content will move to Discarded. You can restore it later.</p>
+      ${item.type === "video" ? `<p class="discard-video-note">Thank you for your feedback, we will contact you soon!</p>` : ""}
+      <section class="discard-reasons" aria-label="Discard reasons">
+        <strong>Why discard this content?</strong>
+        <div>
+          <button type="button" data-discard-reason="low_quality" aria-pressed="false">Low quality</button>
+          <button type="button" data-discard-reason="not_my_style" aria-pressed="false">Not my style</button>
+          <button type="button" data-discard-reason="wrong_product" aria-pressed="false">Wrong product</button>
+          <button type="button" data-discard-reason="bad_media" aria-pressed="false">Bad image/video</button>
+          <button type="button" data-discard-reason="duplicate" aria-pressed="false">Duplicate</button>
+          <button type="button" data-discard-reason="other" aria-pressed="false">Other</button>
+        </div>
+      </section>
+      <footer>
+        <button type="button" data-close-discard-content>Cancel</button>
+        <button type="button" data-confirm-discard-content><span aria-hidden="true">👎</span> Discard</button>
+      </footer>
+    </section>
+  `;
+  document.body.appendChild(layer);
+
+  const close = () => layer.remove();
+  layer.addEventListener("click", (event) => {
+    if (event.target === layer) close();
+  });
+  layer.querySelectorAll("[data-close-discard-content]").forEach((button) => {
+    button.addEventListener("click", close);
+  });
+  layer.querySelectorAll("[data-discard-reason]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const selected = button.classList.toggle("is-selected");
+      button.setAttribute("aria-pressed", String(selected));
+    });
+  });
+  layer.querySelector("[data-confirm-discard-content]")?.addEventListener("click", () => {
+    item.discardReasons = Array.from(layer.querySelectorAll("[data-discard-reason].is-selected")).map((button) => button.dataset.discardReason);
+    item.status = "discarded";
+    close();
+    showToast("Moved to Discarded");
+    renderMyContent(activeStatus, activeType);
+  });
 }
 
 function formatContentDate(value) {
