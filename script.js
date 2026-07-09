@@ -293,32 +293,6 @@ let myContentSelectedProductTitles = [];
 let myContentAppliedProductTitles = [];
 let myContentFocusedId = "";
 
-const discoverVideos = [
-  {
-    id: "tryon",
-    title: "Try-on walkthrough",
-    image: "./assets/product-2.jpg",
-    productIds: ["fringe-dress", "strapless-mini"]
-  },
-  {
-    id: "detail",
-    title: "Clean product showcase",
-    image: "./assets/product-3.jpeg",
-    productIds: ["summer-set"]
-  },
-  {
-    id: "lifestyle",
-    title: "Lifestyle styling clip",
-    image: "./assets/product-4.jpg",
-    productIds: ["linen-shirt", "resort-skirt", "fringe-dress"]
-  }
-];
-
-const discoverFilters = {
-  category: ["Clothing", "Sports Dresses", "Bags & Luggage", "Accessories"],
-  style: ["Classic Tailoring", "Ivy/Trad", "Chanel-chic", "Quiet Luxury"]
-};
-
 const defaultSettings = {
   tone: "Friendly",
   platform: "TikTok",
@@ -368,6 +342,32 @@ const productAssetsByProduct = {
     { id: "filmed-2", title: "Fringe movement", kind: "Video", source: "Filmed", duration: "06s", image: "./assets/product-3.jpeg", createdAt: 400 },
     { id: "filmed-3", title: "Texture detail pack", kind: "Image", source: "Filmed", duration: "", image: "./assets/product-4.jpg", photos: ["./assets/product-4.jpg", "./assets/product-3.jpeg", "./assets/product-2.jpg"], createdAt: 250 }
   ]
+};
+
+const discoverVideos = [
+  {
+    id: "tryon",
+    title: "Try-on walkthrough",
+    image: "./assets/product-2.jpg",
+    productIds: ["fringe-dress", "strapless-mini"]
+  },
+  {
+    id: "detail",
+    title: "Clean product showcase",
+    image: "./assets/product-3.jpeg",
+    productIds: ["summer-set"]
+  },
+  {
+    id: "lifestyle",
+    title: "Lifestyle styling clip",
+    image: "./assets/product-4.jpg",
+    productIds: ["linen-shirt", "resort-skirt", "fringe-dress"]
+  }
+];
+
+const discoverFilters = {
+  category: ["Clothing", "Sports Dresses", "Bags & Luggage", "Accessories"],
+  style: ["Classic Tailoring", "Ivy/Trad", "Chanel-chic", "Quiet Luxury"]
 };
 
 let discoverSearch = "";
@@ -793,7 +793,6 @@ function renderProductAssets(product) {
             <button type="button" data-asset-filter="image" aria-pressed="${productAssetFilter === "image"}">Image</button>
           </div>
           <div class="asset-download-hint" aria-label="Download rules">
-            <p>One ready-to-post download per product. Mark it as posted to download new content.</p>
             <p>You’ve downloaded one content. Mark it as posted first to get more. <button type="button">Mark as Posted &gt;</button></p>
           </div>
         </div>
@@ -2531,9 +2530,7 @@ function bindDiscover() {
 
   app.querySelectorAll(".discover-platforms button").forEach((button) => {
     button.addEventListener("click", () => {
-      button.parentElement.querySelectorAll("button").forEach((item) => {
-        item.classList.toggle("is-active", item === button);
-      });
+      button.classList.toggle("is-active");
     });
   });
 
